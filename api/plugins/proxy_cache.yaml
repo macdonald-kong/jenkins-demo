@@ -1,0 +1,13 @@
+plugins:
+- name: proxy-cache
+  service: employees-directory-v1-dev
+  config:
+    response_code:
+    - 200
+    request_method:
+    - GET
+    - HEAD
+    content_type:
+    - application/json; charset=utf-8
+    cache_ttl: 10
+    strategy: memory

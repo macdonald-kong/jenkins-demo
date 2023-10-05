@@ -1,0 +1,21 @@
+_id: req_fdf43309e1324130a00f61969c54ebf0
+type: Request
+parentId: fld_b9e9b7404a5e4416a3d5badf0be3af7f
+modified: 1687382412526
+created: 1687378884491
+url: "{{ _.base_url }}/api/employees"
+name: Get all employees
+description: ""
+method: GET
+body: {}
+parameters: []
+headers: []
+authentication: {}
+metaSortKey: -1687378884493.5
+isPrivate: false
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global

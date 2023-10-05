@@ -1,0 +1,10 @@
+_id: ut_79234af4de004637b01f936d99ab506d
+type: UnitTest
+parentId: uts_0fc6521dd571499daf1e3da027c9570f
+modified: 1687379120476
+created: 1687379118013
+requestId: req_fdf43309e1324130a00f61969c54ebf0
+name: Get All Employees - Returns 200
+code: |-
+  const response1 = await insomnia.send();
+  expect(response1.status).to.equal(200);
