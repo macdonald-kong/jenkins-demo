@@ -24,9 +24,9 @@ pipeline {
                         --konnect-token ${KONNECT_TOKEN} \
                         --konnect-runtime-group-name ${KONNECT_CONTROL_PLANE}
                     $(pwd)/deck validate \
-                        --state kong.yaml
+                        --state /var/jenkins_home/workspace/tst/kong.yaml
                     $(pwd)/deck diff \
-                        --state kong.yaml \
+                        --state /var/jenkins_home/workspace/tst/kong.yaml \
                         --konnect-addr ${KONNECT_ADDRESS} \
                         --konnect-token ${KONNECT_TOKEN} \
                         --konnect-runtime-group-name ${KONNECT_CONTROL_PLANE} \
