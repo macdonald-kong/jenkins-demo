@@ -21,9 +21,9 @@ pipeline {
                         --konnect-addr ${KONNECT_ADDRESS} \
                         --konnect-token ${KONNECT_TOKEN} \
                         --konnect-runtime-group-name ${KONNECT_CONTROL_PLANE}
-                    deck validate \
+                    $(pwd)/deck validate \
                         --state kong.yaml
-                    deck diff \
+                    $(pwd)/deck diff \
                         --state kong.yaml \
                         --konnect-addr ${KONNECT_ADDRESS} \
                         --konnect-token ${KONNECT_TOKEN} \
