@@ -14,16 +14,16 @@ pipeline {
                 sh '''
                     echo install-tools
                     curl -sL https://github.com/kong/deck/releases/download/v1.25.0/deck_1.25.0_linux_amd64.tar.gz -o deck.tar.gz
-                    tar -xf deck.tar.gz -C $(pwd)
+                    tar -xf deck.tar.gz -C .
                     ./deck
                     ./deck ping \
                         --konnect-addr ${KONNECT_ADDRESS} \
                         --konnect-token ${KONNECT_TOKEN} \
                         --konnect-runtime-group-name ${KONNECT_CONTROL_PLANE}
-                    $(pwd)/deck validate \
-                        --state /var/jenkins_home/workspace/tst/kong.yaml
-                    $(pwd)/deck diff \
-                        --state /var/jenkins_home/workspace/tst/kong.yaml \
+                    ./deck validate \
+                        --state kong.yaml
+                    ./deck diff \
+                        --state kong.yaml \
                         --konnect-addr ${KONNECT_ADDRESS} \
                         --konnect-token ${KONNECT_TOKEN} \
                         --konnect-runtime-group-name ${KONNECT_CONTROL_PLANE} \
