@@ -15,9 +15,8 @@ pipeline {
                     echo "install yq"
                     curl -sL https://github.com/mikefarah/yq/releases/download/v4.2.0/yq_linux_amd64.tar.gz -o yq.tar.gz
                     tar -xf yq.tar.gz -C .
-                    ls
-                    yq
-                    
+                    yq_linux_amd64
+
                     echo "install deck"
                     curl -sL https://github.com/kong/deck/releases/download/v1.25.0/deck_1.25.0_linux_amd64.tar.gz -o deck.tar.gz
                     tar -xf deck.tar.gz -C .
