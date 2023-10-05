@@ -2,9 +2,18 @@ pipeline {
     agent any
 
     environment {
-        KONNECT_ADDRESS         = credentials('konnect-address')
-        KONNECT_CONTROL_PLANE   = credentials('konnect-control-plane')
-        KONNECT_TOKEN           = credentials('konnect-token')
+        KONNECT_ADDRESS             = credentials('konnect-address')
+        KONNECT_CONTROL_PLANE       = credentials('konnect-control-plane')
+        KONNECT_TOKEN               = credentials('konnect-token')
+        KONNECT_PORTAL              = "4abacaf1-47dc-4c07-83ff-a8801782277e"
+        KONNECT_RUNTIME_GROUP_NAME  = "hr-dev"
+        KONNECT_RUNTIME_GROUP_ID    = "1e66084e-0b3c-42e8-9dc8-75e49fe8d4fa"
+        API_PRODUCT_NAME            = "Employees Directory"
+        API_PRODUCT_DESCRIPTION     = "This is a sample Employee Directory Server based on the OpenAPI 3.0 specification."
+        API_PRODUCT_VERSION         = "1.0.1"
+        API_PRODUCT_VERSION_STATUS  = "published"
+        API_PRODUCT_PUBLISH         = "true"
+        SERVICE_TAGS                = "employees-directory-v1-dev"
     }
 
     stages {
@@ -25,17 +34,6 @@ pipeline {
                     tar -xf deck.tar.gz -C .
                     ./deck version
 
-                    echo "Set Variables"
-                    KONNECT_PORTAL=$(echo 4abacaf1-47dc-4c07-83ff-a8801782277e)
-                    KONNECT_RUNTIME_GROUP_NAME=$(./yq '.runtimeGroup' ./config.yaml)
-                    KONNECT_REGION=$(./yq '.region' ./config.yaml)
-                    API_PRODUCT_NAME=$(./yq '.apiProductName' ./config.yaml)
-                    API_PRODUCT_DESCRIPTION=$(./yq .info.description ./api/oas/spec.yaml)
-                    API_PRODUCT_VERSION=$(./yq '.info.version' ./api/oas/spec.yaml)
-                    API_PRODUCT_VERSION_STATUS=$(./yq '.versionStatus' ./config.yaml)
-                    API_PRODUCT_PUBLISH=$(./yq '.publishToPortal' ./config.yaml)
-                    SERVICE_TAGS=$(./yq '.info.title' ./api/oas/spec.yaml)"
-
                     echo "URL Encode Variables"
                     API_PRODUCT_NAME_ENCODED=$(echo ${PRODUCT_NAME} | sed 's/ /%20/g')
                     KONNECT_RUNTIME_GROUP_NAME_ENCODED=$(echo ${KONNECT_RUNTIME_GROUP_NAME} | sed 's/ /%20/g')
@@ -43,21 +41,15 @@ pipeline {
                     echo "Concat API Product Version Variable"
                     API_PRODUCT_VERSION=$(echo ${API_PRODUCT_VERSION}-${KONNECT_RUNTIME_GROUP_NAME_ENCODED})
 
-                    echo "Get Konnect Runtime Group ID"
-                    echo "KONNECT_RUNTIME_GROUP_ID=$(curl \
-                        --url "${KONNECT_ADDRESS}/v2/runtime-groups?filter%5Bname%5D=${KONNECT_RUNTIME_GROUP_NAME_ENCODED}" \
-                        --header "accept: */*"  \
-                        --header "Authorization: Bearer ${KONNECT_TOKEN}" | jq -r '.data[0].id')
-
-                    echo "Lint OpenAPI Spec"
-                    inso lint spec ./api/oas.yaml
-
                     echo "Generate Kong declarative configuration from Spec"
-                    deck file openapi2kong \
-                        --spec ./api/oas.yaml \
+                    ./deck file openapi2kong \
+                        --spec ./api/oas/spec.yml \
                         --format yaml \
                         --select-tag ${SERVICE_TAGS} \
-                        --output-file ./kong-generated.yaml
+                        --output-file kong-generated.yaml
+
+                    ls
+                    cat ./kong-generated.yaml
 
                     echo "Ping Kong Konnect"
                     ./deck ping \
@@ -66,7 +58,7 @@ pipeline {
                         --konnect-runtime-group-name ${KONNECT_CONTROL_PLANE}
 
                     echo "Merge Kong Configuration with Plugins"
-                    deck file merge ./kong-generated.yaml ./api/plugins/* -o kong.yaml
+                    ./deck file merge ./kong-generated.yaml ./api/plugins/* -o kong.yaml
 
                     echo "Validate Kong declarative configuration"
                     ./deck validate \
