@@ -12,6 +12,7 @@ pipeline {
             steps {
                 checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/macdonald-kong/jenkins-demo']])
                 sh '''
+                    pwd
                     ls
                     echo install-tools
                     cd ~ 
