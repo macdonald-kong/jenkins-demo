@@ -78,7 +78,7 @@ pipeline {
                         --select-tag ${SERVICE_TAGS}
                  '''
             }
-    }
+        }
 
         stage('Backup Existing Configuration') {
             steps {
@@ -91,7 +91,7 @@ pipeline {
                         --output-file kong-backup.yaml
                  '''
             }
-    }
+        }
 
         stage('Deploy Kong Declarative Configuration') {
             steps {
@@ -104,7 +104,73 @@ pipeline {
                         --select-tag ${SERVICE_TAGS}
                  '''
             }
-    }
+        }
+
+        stage('Create API Product') {
+            steps {
+                sh '''
+                    echo "Get API Product ID if it already exists"
+                    API_PRODUCT_ID=$(curl \
+                        --request GET \
+                        --url "${KONNECT_ADDRESS}/v2/api-products?filter%5Bname%5D=${API_PRODUCT_NAME_ENCODED}" \
+                        --header "Authorization: Bearer ${KONNECT_TOKEN}" \
+                        --header "Accept: application/json" | jq -r '.data[0].id')"
+
+                    echo "Create API Product"
+                    echo API_PRODUCT_ID: ${API_PRODUCT_ID}
+                    if [[ "${API_PRODUCT_ID}" == "null" ]]; then
+                        API_PRODUCT_ID=$(curl \
+                            --url ${KONNECT_ADDRESS}/v2/api-products \
+                            --header "Authorization: Bearer ${KONNECT_TOKEN}" \
+                            --header 'Content-Type: application/json' \
+                            --data '{
+                                "name":"${API_PRODUCT_NAME}",
+                                "description":"${API_PRODUCT_DESCRIPTION}"
+                            }' | jq -r .id)
+                    fi
+
+                    echo "Prepare Static Documentation"
+                    mkdir docs
+                    for entry in "./api/portal_assets"/*
+                    do
+                        echo "{\"slug\":\"$(echo "$entry" | sed 's#.*/\([^/]*\)\.md#\1#')\",\"status\":\"published\",\"title\":\"$(echo "$entry" | sed 's#.*/\([^/]*\)\.md#\1#')\",\"content\":\"$(base64 -i ./api/portal_assets/${entry##*/})\"}" >> ./docs/$(echo "$entry" | sed 's#.*/\([^/]*\)\.md#\1#').json
+                    done
+
+                    echo "Upload Static Documentation"
+                    for entry in "./docs"/*
+                    do
+                        curl -X POST ${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}/documents \
+                            --header "Authorization: Bearer ${KONNECT_TOKEN}" \
+                            --header "Content-Type: application/json" \
+                            -d @$entry
+                    done
+                 '''
+            }
+        }
+
+        stage('Create API Product Version') {
+            steps {
+                sh '''
+                    echo tbc
+                 '''
+            }
+        }
+
+        stage('Testing') {
+            steps {
+                sh '''
+                    echo tbc
+                 '''
+            }
+        }
+
+        stage('Deploy to Developer Portal') {
+            steps {
+                sh '''
+                    echo tbc
+                 '''
+            }
+        }
 
     }
 }
