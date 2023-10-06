@@ -130,7 +130,7 @@ pipeline {
                         --request GET \
                         --url "${KONNECT_ADDRESS}/v2/api-products?filter%5Bname%5D=${API_PRODUCT_NAME_ENCODED}" \
                         --header "Authorization: Bearer ${KONNECT_TOKEN}" \
-                        --header "Accept: application/json" | jq -r '.data[0].id')
+                        --header "Accept: application/json" | ./jq -r '.data[0].id')
                 '''
 
                 sh '''
@@ -144,7 +144,7 @@ pipeline {
                             --data '{
                                 "name":"${API_PRODUCT_NAME}",
                                 "description":"${API_PRODUCT_DESCRIPTION}"
-                            }' | jq -r .id)
+                            }' | ./jq -r .id)
                     fi
                 '''
 
