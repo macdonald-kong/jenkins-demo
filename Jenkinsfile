@@ -19,7 +19,7 @@ pipeline {
     }
 
     stages {
-        stage('checkout-code') {
+        stage('Install Dependencies') {
             steps {
                 sh '''
                     echo "install yq"
@@ -42,18 +42,23 @@ pipeline {
                     echo "Concat API Product Version Variable"
                     API_PRODUCT_VERSION=$(echo ${API_PRODUCT_VERSION}-${KONNECT_CONTROL_PLANE_NAME_ENCODED})
 
+                    echo "Ping Kong Konnect"
+                    ./deck ping \
+                        --konnect-addr ${KONNECT_ADDRESS} \
+                        --konnect-token ${KONNECT_TOKEN} \
+                        --konnect-runtime-group-name ${KONNECT_CONTROL_PLANE}
+                '''
+            }
+        },
+        stage('Build Kong Declarative Configuration') {
+            steps {
+                sh '''
                     echo "Generate Kong declarative configuration from Spec"
                     ./deck file openapi2kong \
                         --spec ./api/oas/spec.yml \
                         --format yaml \
                         --select-tag ${SERVICE_TAGS} \
                         --output-file kong-generated.yaml
-
-                    echo "Ping Kong Konnect"
-                    ./deck ping \
-                        --konnect-addr ${KONNECT_ADDRESS} \
-                        --konnect-token ${KONNECT_TOKEN} \
-                        --konnect-runtime-group-name ${KONNECT_CONTROL_PLANE}
 
                     echo "Merge Kong Configuration with Plugins"
                     ./deck file merge ./kong-generated.yaml ./api/plugins/* -o kong.yaml
@@ -69,8 +74,31 @@ pipeline {
                         --konnect-token ${KONNECT_TOKEN} \
                         --konnect-runtime-group-name ${KONNECT_CONTROL_PLANE} \
                         --select-tag ${SERVICE_TAGS}
-                '''
+                 '''
             }
-        }
+    },
+        stage('Backup Existing Configuration') {
+            steps {
+                sh '''
+                    echo "Backup Existing Kong Configuration"
+                    ./deck dump \
+                        --konnect-addr ${KONNECT_ADDRESS} \
+                        --konnect-token ${KONNECT_TOKEN} \
+                        --konnect-runtime-group-name ${KONNECT_CONTROL_PLANE} \
+                        --output-file kong-backup.yaml
+                 '''
+            }
+    },
+        stage('Deploy Kong Declarative Configuration') {
+            steps {
+                sh '''
+                    ./deck sync \
+                        --state kong.yaml \
+                        --konnect-addr ${KONNECT_ADDRESS} \
+                        --konnect-token ${KONNECT_TOKEN} \
+                        --konnect-runtime-group-name ${KONNECT_CONTROL_PLANE} \
+                        --select-tag ${SERVICE_TAGS}
+                 '''
+            }
     }
 }
