@@ -21,7 +21,6 @@ pipeline {
     stages {
         stage('checkout-code') {
             steps {
-                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/macdonald-kong/jenkins-demo']])
                 sh '''
                     echo "install yq"
                     curl -o yq https://github.com/mikefarah/yq/releases/download/v4.26.1/yq_linux_amd64 && chmod +x ./yq
