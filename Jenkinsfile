@@ -103,7 +103,8 @@ pipeline {
                         --konnect-addr ${KONNECT_ADDRESS} \
                         --konnect-token ${KONNECT_TOKEN} \
                         --konnect-runtime-group-name ${KONNECT_CONTROL_PLANE} \
-                        --output-file kong-backup.yaml
+                        --output-file kong-backup.yaml \
+                        --yes
                  '''
             }
         }
