@@ -150,12 +150,12 @@ pipeline {
 
                 sh '''
                     echo "Prepare Static Documentation"
-                    mkdir docs
+                    mkdir ./docs
                     for entry in "./api/portal_assets"/*
                     do
                         echo "{\"slug\":\"$(echo "$entry" | sed 's#.*/([^/]*).md#1#')\",\"status\":\"published\",\"title\":\"$(echo "$entry" | sed 's#.*/([^/]*).md#1#')\",\"content\":\"$(base64 -i ./api/portal_assets/${entry##*/})\"}" >> ./docs/$(echo "$entry" | sed 's#.*/([^/]*).md#1#').json
                     done
-                    ls ./api/portal_assets
+                    ls ./docs
                 '''
 
                 sh '''
