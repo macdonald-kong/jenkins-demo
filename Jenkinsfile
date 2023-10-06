@@ -130,7 +130,7 @@ pipeline {
                         --request GET \
                         --url "${KONNECT_ADDRESS}/v2/api-products?filter%5Bname%5D=${API_PRODUCT_NAME_ENCODED}" \
                         --header "Authorization: Bearer ${KONNECT_TOKEN}" \
-                        --header "Accept: application/json" | jq -r '.data[0].id')"
+                        --header "Accept: application/json" | jq -r '.data[0].id')
                 '''
 
                 sh '''
@@ -155,6 +155,7 @@ pipeline {
                     do
                         echo "{\"slug\":\"$(echo "$entry" | sed 's#.*/([^/]*).md#1#')\",\"status\":\"published\",\"title\":\"$(echo "$entry" | sed 's#.*/([^/]*).md#1#')\",\"content\":\"$(base64 -i ./api/portal_assets/${entry##*/})\"}" >> ./docs/$(echo "$entry" | sed 's#.*/([^/]*).md#1#').json
                     done
+                    ls ./api/portal_assets
                 '''
 
                 sh '''
