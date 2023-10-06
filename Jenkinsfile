@@ -131,7 +131,7 @@ pipeline {
                         --header "Authorization: Bearer ${KONNECT_TOKEN}" \
                         --header "Accept: application/json" | jq -r '.data[0].id')"
                 '''
-                
+
                 sh '''
                     echo "Create API Product"
                     echo API_PRODUCT_ID: ${API_PRODUCT_ID}
@@ -152,7 +152,7 @@ pipeline {
                     mkdir docs
                     for entry in "./api/portal_assets"/*
                     do
-                        echo "{\"slug\":\"$(echo "$entry" | sed 's#.*/\([^/]*\)\.md#\1#')\",\"status\":\"published\",\"title\":\"$(echo "$entry" | sed 's#.*/\([^/]*\)\.md#\1#')\",\"content\":\"$(base64 -i ./api/portal_assets/${entry##*/})\"}" >> ./docs/$(echo "$entry" | sed 's#.*/\([^/]*\)\.md#\1#').json
+                        echo "{\"slug\":\"$(echo "$entry" | sed 's#.*/([^/]*).md#1#')\",\"status\":\"published\",\"title\":\"$(echo "$entry" | sed 's#.*/([^/]*).md#1#')\",\"content\":\"$(base64 -i ./api/portal_assets/${entry##*/})\"}" >> ./docs/$(echo "$entry" | sed 's#.*/([^/]*).md#1#').json
                     done
                 '''
 
