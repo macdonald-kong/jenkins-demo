@@ -2,14 +2,14 @@ pipeline {
     agent any
 
     parameters {
-            string(name: 'KONNECT_RUNTIME_GROUP_ID', defaultValue: '1e66084e-0b3c-42e8-9dc8-75e49fe8d4fa', description: 'xxx')
-            string(name: 'KONNECT_PORTAL', defaultValue: '4abacaf1-47dc-4c07-83ff-a8801782277e', description: 'xxx')
-            string(name: 'API_PRODUCT_NAME', defaultValue: 'Employees Directory', description: 'xxx')
-            string(name: 'API_PRODUCT_DESCRIPTION', defaultValue: 'This is a sample Employee Directory Server based on the OpenAPI 3.0 specification.', description: 'xxx')
-            string(name: 'API_PRODUCT_VERSION', defaultValue: '1.0.1', description: 'xxx')
-            string(name: 'SERVICE_TAGS', defaultValue: 'employees-directory-v1-dev', description: 'xxx')
-            choice(name: 'API_PRODUCT_VERSION_STATUS', choices: [ "published", "deprecated", "unpublished" ], description: 'xxx', defaultValue: 'published')
-            choice(name: 'API_PRODUCT_PUBLISH', choices: [ "true", "false" ], description: 'xxx', defaultValue: 'true')
+        string(name: 'KONNECT_CONTROL_PLANE_ID', defaultValue: '1e66084e-0b3c-42e8-9dc8-75e49fe8d4fa', description: 'xxx')
+        string(name: 'KONNECT_PORTAL', defaultValue: '4abacaf1-47dc-4c07-83ff-a8801782277e', description: 'xxx')
+        string(name: 'API_PRODUCT_NAME', defaultValue: 'Employees Directory', description: 'xxx')
+        string(name: 'API_PRODUCT_DESCRIPTION', defaultValue: 'This is a sample Employee Directory Server based on the OpenAPI 3.0 specification.', description: 'xxx')
+        string(name: 'API_PRODUCT_VERSION', defaultValue: '1.0.1', description: 'xxx')
+        string(name: 'SERVICE_TAGS', defaultValue: 'employees-directory-v1-dev', description: 'xxx')
+        choice(name: 'API_PRODUCT_VERSION_STATUS', choices: [ "published", "deprecated", "unpublished" ], description: 'xxx')
+        choice(name: 'API_PRODUCT_PUBLISH', choices: [ "true", "false" ], description: 'xxx')
     }
 
     environment {
@@ -37,11 +37,11 @@ pipeline {
                     ./deck version
 
                     echo "URL Encode Variables"
-                    API_PRODUCT_NAME_ENCODED=$(echo ${PRODUCT_NAME} | sed 's/ /%20/g')
-                    KONNECT_RUNTIME_GROUP_NAME_ENCODED=$(echo ${KONNECT_RUNTIME_GROUP_NAME} | sed 's/ /%20/g')
+                    API_PRODUCT_NAME_ENCODED=$(echo ${API_PRODUCT_NAME} | sed 's/ /%20/g')
+                    KONNECT_CONTROL_PLANE_NAME_ENCODED=$(echo ${KONNECT_CONTROL_PLANE} | sed 's/ /%20/g')
 
                     echo "Concat API Product Version Variable"
-                    API_PRODUCT_VERSION=$(echo ${API_PRODUCT_VERSION}-${KONNECT_RUNTIME_GROUP_NAME_ENCODED})
+                    API_PRODUCT_VERSION=$(echo ${API_PRODUCT_VERSION}-${KONNECT_CONTROL_PLANE_NAME_ENCODED})
 
                     echo "Generate Kong declarative configuration from Spec"
                     ./deck file openapi2kong \
@@ -49,9 +49,6 @@ pipeline {
                         --format yaml \
                         --select-tag ${SERVICE_TAGS} \
                         --output-file kong-generated.yaml
-
-                    ls
-                    cat ./kong-generated.yaml
 
                     echo "Ping Kong Konnect"
                     ./deck ping \
