@@ -19,6 +19,7 @@ pipeline {
     }
 
     stages {
+
         stage('Install Dependencies') {
             steps {
                 sh '''
@@ -49,7 +50,8 @@ pipeline {
                         --konnect-runtime-group-name ${KONNECT_CONTROL_PLANE}
                 '''
             }
-        },
+        }
+
         stage('Build Kong Declarative Configuration') {
             steps {
                 sh '''
@@ -76,7 +78,8 @@ pipeline {
                         --select-tag ${SERVICE_TAGS}
                  '''
             }
-    },
+    }
+
         stage('Backup Existing Configuration') {
             steps {
                 sh '''
@@ -88,7 +91,8 @@ pipeline {
                         --output-file kong-backup.yaml
                  '''
             }
-    },
+    }
+
         stage('Deploy Kong Declarative Configuration') {
             steps {
                 sh '''
@@ -101,4 +105,5 @@ pipeline {
                  '''
             }
     }
+    
 }
