@@ -1,18 +1,21 @@
 pipeline {
     agent any
 
+    parameters {
+            string(name: 'KONNECT_RUNTIME_GROUP_NAME', defaultValue: 'hr-dev')
+            string(name: 'KONNECT_RUNTIME_GROUP_ID', defaultValue: '1e66084e-0b3c-42e8-9dc8-75e49fe8d4fa')
+            choice(name: 'API_PRODUCT_VERSION_STATUS', choices: [ "published", "deprecated", "unpublished" ], description: 'xxx'  )
+            choice(name: 'API_PRODUCT_PUBLISH', choices: [ "true", "false" ], description: 'xxx'  )
+    }
+
     environment {
         KONNECT_ADDRESS             = credentials('konnect-address')
         KONNECT_CONTROL_PLANE       = credentials('konnect-control-plane')
         KONNECT_TOKEN               = credentials('konnect-token')
         KONNECT_PORTAL              = "4abacaf1-47dc-4c07-83ff-a8801782277e"
-        KONNECT_RUNTIME_GROUP_NAME  = "hr-dev"
-        KONNECT_RUNTIME_GROUP_ID    = "1e66084e-0b3c-42e8-9dc8-75e49fe8d4fa"
         API_PRODUCT_NAME            = "Employees Directory"
         API_PRODUCT_DESCRIPTION     = "This is a sample Employee Directory Server based on the OpenAPI 3.0 specification."
         API_PRODUCT_VERSION         = "1.0.1"
-        API_PRODUCT_VERSION_STATUS  = "published"
-        API_PRODUCT_PUBLISH         = "true"
         SERVICE_TAGS                = "employees-directory-v1-dev"
     }
 
