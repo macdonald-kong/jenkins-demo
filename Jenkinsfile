@@ -18,6 +18,8 @@ pipeline {
         KONNECT_TOKEN               = credentials('konnect-token')
     }
 
+    stages {
+
         stage('Lint OAS') {
             steps {
                 sh '''
@@ -187,3 +189,4 @@ pipeline {
         }
 
     }
+}
