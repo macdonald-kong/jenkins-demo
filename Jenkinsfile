@@ -133,7 +133,7 @@ pipeline {
                         filename=$(echo "$entry" | sed 's#.*/\([^/]*\)\.md#\1#')
                         content=$(base64 -i "$entry")
                         echo "{\"slug\":\"$filename\",\"status\":\"published\",\"title\":\"$filename\",\"content\":\"$content\"}" >> "./docs/${filename}.json"
-                        ls
+                        ls -al
                     done
                 '''
 
