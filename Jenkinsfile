@@ -5,7 +5,7 @@ pipeline {
         string(name: 'KONNECT_CONTROL_PLANE_ID', defaultValue: '1e66084e-0b3c-42e8-9dc8-75e49fe8d4fa', description: 'xxx')
         string(name: 'KONNECT_PORTAL', defaultValue: '4abacaf1-47dc-4c07-83ff-a8801782277e', description: 'xxx')
         string(name: 'API_PRODUCT_NAME', defaultValue: 'Employees-Directory', description: 'xxx')
-        string(name: 'API_PRODUCT_DESCRIPTION', defaultValue: 'This is a sample Employee Directory Server based on the OpenAPI 3.0 specification.', description: 'xxx')
+        string(name: 'API_PRODUCT_DESCRIPTION', defaultValue: 'demo', description: 'xxx')
         string(name: 'API_PRODUCT_VERSION', defaultValue: '1.0.1', description: 'xxx')
         string(name: 'SERVICE_TAGS', defaultValue: 'employees-directory-v1-dev', description: 'xxx')
         choice(name: 'API_PRODUCT_VERSION_STATUS', choices: [ "published", "deprecated", "unpublished" ], description: 'xxx')
@@ -62,7 +62,7 @@ pipeline {
                     deck ping \
                         --konnect-addr ${KONNECT_ADDRESS} \
                         --konnect-token ${KONNECT_TOKEN} \
-                        --konnect-runtime-group-name ${KONNECT_CONTROL_PLANE}
+                        --konnect-control-plane-name ${KONNECT_CONTROL_PLANE}
                 '''
 
                 sh '''
@@ -72,7 +72,7 @@ pipeline {
                         --state kong.yaml \
                         --konnect-addr ${KONNECT_ADDRESS} \
                         --konnect-token ${KONNECT_TOKEN} \
-                        --konnect-runtime-group-name ${KONNECT_CONTROL_PLANE} \
+                        --konnect-control-plane-name ${KONNECT_CONTROL_PLANE} \
                         --select-tag ${SERVICE_TAGS}
                  '''
             }
@@ -86,7 +86,7 @@ pipeline {
                     deck dump \
                         --konnect-addr ${KONNECT_ADDRESS} \
                         --konnect-token ${KONNECT_TOKEN} \
-                        --konnect-runtime-group-name ${KONNECT_CONTROL_PLANE} \
+                        --konnect-control-plane-name ${KONNECT_CONTROL_PLANE} \
                         --output-file kong-backup.yaml \
                         --yes
                  '''
@@ -101,7 +101,7 @@ pipeline {
                         --state kong.yaml \
                         --konnect-addr ${KONNECT_ADDRESS} \
                         --konnect-token ${KONNECT_TOKEN} \
-                        --konnect-runtime-group-name ${KONNECT_CONTROL_PLANE} \
+                        --konnect-control-plane-name ${KONNECT_CONTROL_PLANE} \
                         --select-tag ${SERVICE_TAGS}
                  '''
             }
@@ -111,29 +111,16 @@ pipeline {
             steps {
 
                 sh '''
-                    echo "Get API Product ID if it already exists"
-                    API_PRODUCT_ID=$(curl \
-                        --request GET \
-                        --url "${KONNECT_ADDRESS}/v2/api-products?filter%5Bname%5D=${API_PRODUCT_NAME}" \
-                        --header "Authorization: Bearer ${KONNECT_TOKEN}" \
-                        --header "Accept: application/json" | ./jq -r '.data[0].id')
-                '''
-
-                sh '''
                     echo "Create API Product"
                     
-                    echo API_PRODUCT_ID: ${API_PRODUCT_ID}
-                    
-                    if [ -z "${API_PRODUCT_ID}" ]; then
-                        API_PRODUCT_ID=$(curl \
-                            --url ${KONNECT_ADDRESS}/v2/api-products \
-                            --header "Authorization: Bearer ${KONNECT_TOKEN}" \
-                            --header 'Content-Type: application/json' \
-                            --data '{
-                                "name":"${API_PRODUCT_NAME}",
-                                "description":"${API_PRODUCT_DESCRIPTION}"
-                            }' | ./jq -r .id)
-                    fi
+                    API_PRODUCT_ID=$(curl \
+                        --url ${KONNECT_ADDRESS}/v2/api-products \
+                        --header "Authorization: Bearer ${KONNECT_TOKEN}" \
+                        --header 'Content-Type: application/json' \
+                        --data '{
+                            "name":"'${API_PRODUCT_NAME}'",
+                            "description":"'${API_PRODUCT_DESCRIPTION}'"
+                        }' | jq -r .id)
                 '''
 
                 sh '''
