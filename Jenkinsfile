@@ -18,10 +18,10 @@ pipeline {
         KONNECT_TOKEN               = credentials('konnect-token')
     }
 
-        stage('Build Kong Declarative Configuration') {
+        stage('Lint OAS') {
             steps {
                 sh '''
-                    echo "Generate Kong declarative configuration from Spec"
+                    echo "Lint OAS with Inso CLI"
                     inso lint spec ./api/oas/spec.yml
                 '''
             }
