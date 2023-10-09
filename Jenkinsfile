@@ -126,20 +126,21 @@ pipeline {
                 sh '''
                     echo "Prepare Static Documentation"
                     
-                    mkdir -p ./docs
-                    
-                    for entry in "./api/portal_assets"/*
+                    mkdir -p "$(pwd)/docs"
+
+                    for entry in "$(pwd)/api/portal_assets"/*
                     do
-                        echo "{\"slug\":\"$(echo "$entry" | sed 's#.*/([^/]*).md#1#')\",\"status\":\"published\",\"title\":\"$(echo "$entry" | sed 's#.*/([^/]*).md#1#')\",\"content\":\"$(base64 -i ./api/portal_assets/${entry##*/})\"}" >> ./docs/$(echo "$entry" | sed 's#.*/([^/]*).md#1#').json
+                        filename=$(echo "$entry" | sed 's#.*/\([^/]*\)\.md#\1#')
+                        content=$(base64 -i "$entry")
+                        echo "{\"slug\":\"$filename\",\"status\":\"published\",\"title\":\"$filename\",\"content\":\"$content\"}" >> "./docs/${filename}.json"
+                        ls
                     done
-                    
-                    ls ./docs
                 '''
 
                 sh '''
                     echo "Upload Static Documentation"
                     
-                    for entry in "./docs"/*
+                    for entry in $(pwd)/docs/*
                     
                     do
                         curl -X POST ${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}/documents \
