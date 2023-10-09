@@ -1,5 +1,3 @@
-#!/bin/bash
-
 pipeline {
     agent any
 
@@ -130,12 +128,12 @@ pipeline {
                     
                     mkdir -p "$(pwd)/docs"
 
-                    for entry in "$(pwd)/api/portal_assets"/*
+                    for entry in $(pwd)/api/portal_assets/*
                     do
                         filename=$(echo "$entry" | sed 's#.*/\([^/]*\)\.md#\1#')
                         content=$(base64 -i "$entry")
                         echo "{\"slug\":\"$filename\",\"status\":\"published\",\"title\":\"$filename\",\"content\":\"$content\"}" >> "./docs/${filename}.json"
-                        ls -al
+                        echo "Processed: $entry"
                     done
                 '''
 
