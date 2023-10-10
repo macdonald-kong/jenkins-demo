@@ -1,5 +1,23 @@
+
+/**
+*
+* Basic Jenkinsfile for Kong Konnect Demonstrations
+*
+* Author: David MacDonald
+* Contact: david.macdonald@konghq.com
+* Website: https://konghq.com/
+*
+* DISCLAIMER: DO NOT USE THIS IN PRODUCTION - FOR DEMONSTRATION PURPOSES ONLY
+*
+*/
+
 pipeline {
     agent any
+
+    environment {
+        KONNECT_TOKEN       = credentials('konnect-token')
+        KONG_GATEWAY_URL    = credentials('gateway-url')
+    }
 
     parameters {
         string(name: 'KONNECT_ADDRESS', defaultValue: 'https://eu.api.konghq.com', description: 'xxx')
@@ -16,11 +34,6 @@ pipeline {
         string(name: 'KONNECT_CONTROL_PLANE_ID', defaultValue: '')
         string(name: 'SERVICE_ID', defaultValue: '')
         string(name: 'API_PRODUCT_ID', defaultValue: '')
-    }
-
-    environment {
-        KONNECT_TOKEN       = credentials('konnect-token')
-        KONG_GATEWAY_URL    = credentials('gateway-url')
     }
 
     stages {
@@ -186,6 +199,31 @@ pipeline {
                     echo "API Product ID: $TMP_API_PRODUCT_ID"
                 }
             }        
+        }
+
+        stage('Delete Current API Product Documentation') {
+            steps {
+                // Delete the current API Documentation so that we can upload the new ones with any updates
+                // Very inneficient - will improve later
+
+                DOCUMENTS_JSON = sh(script: '''
+                    curl --url ${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}/documents \
+                    --header "Authorization: Bearer ${KONNECT_TOKEN}" \
+                    --header "Content-Type: application/json" \
+                ''', returnStdout: true).trim()
+
+                echo "Currently available documentation: $DOCUMENTS_JSON"
+
+                sh '''
+                    # Extract document IDs and send DELETE requests
+                    ids=$(echo "$DOCUMENTS_JSON" | jq -r '.data[].id')
+
+                    for id in $ids; do
+                        delete_url="$KONNECT_ADDRESS/v2/api-products/$API_PRODUCT_ID/documents/$id"
+                        response=$(curl -X DELETE -w "%{http_code}" --header "Authorization: Bearer ${KONNECT_TOKEN}" -s "$delete_url")
+                    done
+                '''
+            }
         }
 
         stage('Upload API Product Documentation') {
