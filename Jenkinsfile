@@ -121,26 +121,88 @@ pipeline {
                             "name":"'${API_PRODUCT_NAME}'",
                             "description":"'${API_PRODUCT_DESCRIPTION}'"
                         }' | jq -r .id)
-                '''
 
-                sh '''
+
+                    # Path to the folder containing files
+                    PORTAL_ASSETS_FOLDER="./api/portal_assets/"
+
+                    mkdir -p docs
+
+                    for file_path in "$PORTAL_ASSETS_FOLDER"/*; do
+                        
+                        FILE_NAME=$(basename -- "$file_path")
+                        FILE_NAME_NO_EXT=$(echo "$FILE_NAME" | cut -f 1 -d '.')
+                        FILE_CONTENTS=$(base64 -w 0 -i ./api/portal_assets/$FILE_NAME)
+
+                        # Create JSON payload with file name
+                        FILE_CONTENTS_JSON='{"slug": "'"$FILE_NAME_NO_EXT"'","status": "published","title": "'"$FILE_NAME_NO_EXT"'","content": "'"$FILE_CONTENTS"'"}'
+
+                        # Create a new document with JSON payload
+                        echo "$FILE_CONTENTS_JSON" > ./docs/"$FILE_NAME_NO_EXT.json"
+
+                    done
+
                     echo "Upload Static Documentation"
-                    
-                    generate_document_data()
-                    {
-                        cat <<EOF
-                    {
-                        "slug": "test",
-                        "status": "test",
-                        "title": "test",
-                        "content": "test"
-                    }
-                    EOF
-                    }
 
-                    curl -s -H "Authorization: Bearer ${KONNECT_TOKEN}" -X POST https://eu.api.konghq.com/konnect-api/api/api-products/${API_PRODUCT_ID}/documents \
-                        -H 'Content-Type: application/json' \
-                        -d "$(generate_document_data)" > /dev/null
+                    JSON_DOCS_FOLDER="./docs"
+
+                    for file in "$JSON_DOCS_FOLDER"/*; do
+                        curl --url ${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}/documents \
+                            --header "Authorization: Bearer ${KONNECT_TOKEN}" -X POST \
+                            --header 'Content-Type: application/json' \
+                            --data @"$file" -v
+                    done
+
+                    # Checks if an API Product Version already exists so that we don't create a duplicate each time this is run
+
+                    echo "get-api-product-version-id"
+
+                    KONNECT_API_PRODUCT_VERSION_ID=$(curl \
+                        --request GET \
+                        --url ${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}/product-versions?filter%5Bname%5D=${API_PRODUCT_VERSION} \
+                        --header "Authorization: Bearer ${KONNECT_TOKEN}" \
+                        --header "Accept: application/json" | jq -r '.data[0].id')
+
+                    # Create a new API Product Version if the API Product Version ID from the previous script is null
+
+                    if [[ "${KONNECT_API_PRODUCT_VERSION_ID}" == "null" ]]; then
+
+                        SERVICE_ID=bebc516a-61ba-54d2-a1f8-84351acf6c4d
+
+                        KONNECT_API_PRODUCT_VERSION_ID=$(curl -X POST \
+                            --url ${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}/product-versions \
+                            --header "Authorization: Bearer ${KONNECT_TOKEN}" \
+                            --header "Content-Type: application/json" \
+                            --header "Accept: application/json" \
+                            --data '{
+                                "name":"'"${API_PRODUCT_VERSION}"'",
+                                "publish_status":"'"${API_PRODUCT_VERSION_STATUS}"'",
+                                "deprecated":false,
+                                "gateway_service": {
+                                    "runtime_group_id":"'"${KONNECT_CONTROL_PLANE_ID}"'",
+                                    "id":"'"${SERVICE_ID}"'"
+                                }
+                            }' | jq -r '.id')
+                    fi
+
+                    # Add the OAS to the JSON Payload required by the Konnect Product API Version API and output as a file
+
+                    echo "Prepare OpenAPI Specification"
+
+                    base64 -w 0 ./api/oas/spec.yml > oas-encoded.yaml
+                    
+                    jq --null-input --arg content "$(<oas-encoded.yaml)" '{"name": "oas.yaml", "content": $content}' >> product_version_spec.json
+
+                    # Upload the prepared OAS JSON Payload to the API Product Version
+
+                    echo "Upload OpenAPI Specification to API Product Version"
+
+                    curl -v \
+                        --url "${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}/product-versions/${KONNECT_API_PRODUCT_VERSION_ID}/specifications" \
+                        --header "Authorization: Bearer ${KONNECT_TOKEN}" \
+                        --header "Content-Type: application/json" \
+                        --header "Accept: application/json" \
+                        --data @product_version_spec.json
 
                 '''
             }
@@ -165,7 +227,18 @@ pipeline {
         stage('Deploy to Developer Portal') {
             steps {
                 sh '''
-                    echo tbc
+
+                echo "Publish to Developer Portal"
+
+                if [[ "${API_PRODUCT_PUBLISH}" == true ]]; then
+                    curl --request PATCH \
+                    --url "${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}" \
+                    --header "Authorization: Bearer ${KONNECT_TOKEN}" \
+                    --header 'Content-Type: application/json' \
+                    --header 'accept: application/json' \
+                    --data '{"portal_ids":["${KONNECT_PORTAL}"]}'
+                fi
+
                  '''
             }
         }
