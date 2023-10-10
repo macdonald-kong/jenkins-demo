@@ -247,7 +247,7 @@ pipeline {
 
                     base64 -w 0 ./api/oas/spec.yml > oas-encoded.yaml
                     
-                    jq --null-input --arg content "$(<oas-encoded.yaml)" '{"name": "oas.yaml", "content": $content}' >> product_version_spec.json
+                    jq --null-input --arg content "$(<oas-encoded.yaml)" '{"name": "oas.yaml", "content": $content}' > product_version_spec.json
 
                     curl \
                         --url "${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}/product-versions/${KONNECT_API_PRODUCT_VERSION_ID}/specifications" \
