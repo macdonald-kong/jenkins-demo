@@ -11,16 +11,16 @@ pipeline {
         string(name: 'API_PRODUCT_VERSION', defaultValue: '1.0.1', description: 'xxx')
         choice(name: 'API_PRODUCT_VERSION_STATUS', choices: [ "published", "deprecated", "unpublished" ], description: 'xxx')
         string(name: 'SERVICE_TAGS', defaultValue: 'employees-directory-v1-dev', description: 'xxx')
+        string(name: 'KONNECT_CONTROL_PLANE_NAME_ENCODED', defaultValue: '')
+        string(name: 'API_PRODUCT_NAME_ENCODED', defaultValue: '')
+        string(name: 'KONNECT_CONTROL_PLANE_ID', defaultValue: '')
+        string(name: 'SERVICE_ID', defaultValue: '')
+        string(name: 'API_PRODUCT_ID', defaultValue: '')
 
     }
     environment {
         KONNECT_TOKEN               = credentials('konnect-token')
         KONG_GATEWAY_URL            = credentials('gateway-url')
-
-        API_PRODUCT_NAME_ENCODED            = ''
-        KONNECT_CONTROL_PLANE_NAME_ENCODED  = ''
-        KONNECT_CONTROL_PLANE_ID            = ''
-        SERVICE_ID                          = ''
     }
 
     stages {
@@ -47,26 +47,21 @@ pipeline {
             }
         }
 
-        stage('Set Variables') {
+        stage('Set Variables Test') {
             steps {
-                sh '''
-                    # The Konnect Control Plane Name and API Product Names might include characters that need to be URL encoded.
-                    API_PRODUCT_NAME_ENCODED=$(echo ${API_PRODUCT_NAME} | sed 's/ /%20/g')
-                    KONNECT_CONTROL_PLANE_NAME_ENCODED=$(echo ${KONNECT_CONTROL_PLANE} | sed 's/ /%20/g')
-                '''
+                script {
+                    TMP_API_PRODUCT_NAME_ENCODED =  sh (script: 'echo ${API_PRODUCT_NAME} | sed \'s/ /%20/g\'', returnStdout: true).trim()
+                    env.API_PRODUCT_NAME_ENCODED = TMP_API_PRODUCT_NAME_ENCODED
 
-                sh '''
-                    # The API Product Version name will not be unique if just based on what we extract from the OAS - we need to add the Runtime Group Name to this
-                    API_PRODUCT_VERSION=$(echo ${API_PRODUCT_VERSION}-${KONNECT_CONTROL_PLANE_NAME_ENCODED})
-                '''
+                    TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED =  sh (script: 'echo ${KONNECT_CONTROL_PLANE} | sed \'s/ /%20/g\'', returnStdout: true).trim()
+                    env.KONNECT_CONTROL_PLANE_NAME_ENCODED = TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED
 
-                sh '''
-                    # Use the Konnect Control Plane Name to search for the ID using the Konnect Control Plane API
-                    KONNECT_CONTROL_PLANE_ID=$(curl \
-                        --url "${KONNECT_ADDRESS}/v2/control-planes?filter%5Bname%5D=${KONNECT_CONTROL_PLANE_NAME_ENCODED}" \
-                        --header "accept: */*"  \
-                        --header "Authorization: Bearer ${KONNECT_TOKEN}" | jq -r '.data[0].id')
-                '''
+                    TMP_API_PRODUCT_VERSION =  sh (script: 'echo ${API_PRODUCT_VERSION}-${KONNECT_CONTROL_PLANE_NAME_ENCODED}', returnStdout: true).trim()
+                    env.API_PRODUCT_VERSION = TMP_API_PRODUCT_VERSION
+
+                    TMP_KONNECT_CONTROL_PLANE_ID =  sh (script: 'curl --url "${KONNECT_ADDRESS}/v2/control-planes?filter%5Bname%5D=${KONNECT_CONTROL_PLANE_NAME_ENCODED}" --header "accept: */*" --header "Authorization: Bearer ${KONNECT_TOKEN}" | jq -r \'.data[0].id\'', returnStdout: true).trim()
+                    env.KONNECT_CONTROL_PLANE_ID = TMP_KONNECT_CONTROL_PLANE_ID
+                    }
             }
         }
 
@@ -107,8 +102,7 @@ pipeline {
                 '''
                 
                 sh '''
-                    echo "Diff declarative config"
-                    
+                    # Compare the new desired state represented in the generated Kong Declarative Configuration with the current state of the platform
                     deck diff \
                         --state kong.yaml \
                         --konnect-addr ${KONNECT_ADDRESS} \
@@ -122,8 +116,7 @@ pipeline {
         stage('Backup Existing Configuration') {
             steps {
                 sh '''
-                    echo "Backup Existing Kong Configuration"
-                    
+                    # Use decK dump to take a backup of the entire Control Plane Configuration
                     deck dump \
                         --konnect-addr ${KONNECT_ADDRESS} \
                         --konnect-token ${KONNECT_TOKEN} \
@@ -144,32 +137,49 @@ pipeline {
                         --konnect-token ${KONNECT_TOKEN} \
                         --konnect-control-plane-name ${KONNECT_CONTROL_PLANE} \
                         --select-tag ${SERVICE_TAGS}
-                    
-                    # Set a Variable containing the Service ID of the Service that we deployed - we need this to link the API Product to a Kong Service
-                    echo SERVICE_ID=$(curl \
-                        --url "${KONNECT_ADDRESS}/v2/runtime-groups/${KONNECT_CONTROL_PLANE_ID}}/core-entities/services?tags=${SERVICE_TAGS}" \
-                        --header 'accept: application/json' \
-                        --header "Authorization: Bearer ${KONNECT_TOKEN}" | jq -r '.data[0].id')
                  '''
+            }
+        }
+        
+        stage('Get Gateway Service ID') {
+            steps {
+                script {
+                    TMP_SERVICE_ID =  sh(script: '''
+                        curl --url "${KONNECT_ADDRESS}/v2/control-planes/${KONNECT_CONTROL_PLANE_ID}/core-entities/services?tags=${SERVICE_TAGS}" \
+                        --header 'accept: application/json' \
+                        --header "Authorization: Bearer ${KONNECT_TOKEN}" \ 
+                        | jq -r \'.data[0].id\'
+                        ''', returnStdout: true).trim()
+                    
+                    env.SERVICE_ID = TMP_SERVICE_ID
+
+                    echo "Gateway Service ID: $TMP_SERVICE_ID"
+                }
             }
         }
 
         stage('Create API Product') {
             steps {
-
-                sh '''
-                    echo "Create API Product"
-                    
-                    API_PRODUCT_ID=$(curl \
-                        --url ${KONNECT_ADDRESS}/v2/api-products \
+                script {
+                    TMP_API_PRODUCT_ID = sh(script: '''
+                        curl --url ${KONNECT_ADDRESS}/v2/api-products \
                         --header "Authorization: Bearer ${KONNECT_TOKEN}" \
-                        --header 'Content-Type: application/json' \
-                        --data '{
-                            "name":"'${API_PRODUCT_NAME}'",
-                            "description":"'${API_PRODUCT_DESCRIPTION}'"
-                        }' | jq -r .id)
+                        --header "Content-Type: application/json" \
+                        --data '{ "name": "${API_PRODUCT_NAME}", "description": "${API_PRODUCT_DESCRIPTION}" }' \
+                        | jq -r .id
+                    ''', returnStdout: true).trim()
 
+                    env.API_PRODUCT_ID = TMP_API_PRODUCT_ID
 
+                    echo "API Product ID: $TMP_API_PRODUCT_ID"
+
+                }
+            }        
+        }
+        
+        stage('Upload API Product Documentation') {
+            steps {
+                sh '''
                     # Path to the folder containing files
 
                     PORTAL_ASSETS_FOLDER="./api/portal_assets/"
@@ -198,7 +208,7 @@ pipeline {
                         curl --url ${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}/documents \
                             --header "Authorization: Bearer ${KONNECT_TOKEN}" -X POST \
                             --header 'Content-Type: application/json' \
-                            --data @"$file" -v
+                            --data @"$file"
                     done
 
                     # Checks if an API Product Version already exists so that we don't create a duplicate each time this is run
@@ -213,7 +223,7 @@ pipeline {
 
                     # Create a new API Product Version if the API Product Version ID from the previous script is null
 
-                    if [[ "${KONNECT_API_PRODUCT_VERSION_ID}" == "null" ]]; then
+                    if [ -z "${KONNECT_API_PRODUCT_VERSION_ID}" ]; then
 
                         KONNECT_API_PRODUCT_VERSION_ID=$(curl -X POST \
                             --url ${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}/product-versions \
@@ -225,7 +235,7 @@ pipeline {
                                 "publish_status":"'"${API_PRODUCT_VERSION_STATUS}"'",
                                 "deprecated":false,
                                 "gateway_service": {
-                                    "runtime_group_id":"'"${KONNECT_CONTROL_PLANE_ID}"'",
+                                    "control_plane_id":"'"${KONNECT_CONTROL_PLANE_ID}"'",
                                     "id":"'"${SERVICE_ID}"'"
                                 }
                             }' | jq -r '.id')
@@ -243,13 +253,12 @@ pipeline {
 
                     echo "Upload OpenAPI Specification to API Product Version"
 
-                    curl -v \
+                    curl \
                         --url "${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}/product-versions/${KONNECT_API_PRODUCT_VERSION_ID}/specifications" \
                         --header "Authorization: Bearer ${KONNECT_TOKEN}" \
                         --header "Content-Type: application/json" \
                         --header "Accept: application/json" \
                         --data @product_version_spec.json
-
                 '''
             }
         }
