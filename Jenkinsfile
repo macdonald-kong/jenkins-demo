@@ -1,15 +1,20 @@
+def API_PRODUCT_NAME_ENCODED
+def KONNECT_CONTROL_PLANE_NAME_ENCODED
+def KONNECT_CONTROL_PLANE_ID
+def SERVICE_ID
+
 pipeline {
     agent any
 
     parameters {
-        string(name: 'KONNECT_CONTROL_PLANE_ID', defaultValue: '1e66084e-0b3c-42e8-9dc8-75e49fe8d4fa', description: 'xxx')
         string(name: 'KONNECT_PORTAL', defaultValue: '4abacaf1-47dc-4c07-83ff-a8801782277e', description: 'xxx')
-        string(name: 'API_PRODUCT_NAME', defaultValue: 'Employees-Directory', description: 'xxx')
+        string(name: 'API_PRODUCT_NAME', defaultValue: 'Employees Directory', description: 'xxx')
         string(name: 'API_PRODUCT_DESCRIPTION', defaultValue: 'demo', description: 'xxx')
         string(name: 'API_PRODUCT_VERSION', defaultValue: '1.0.1', description: 'xxx')
         string(name: 'SERVICE_TAGS', defaultValue: 'employees-directory-v1-dev', description: 'xxx')
         choice(name: 'API_PRODUCT_VERSION_STATUS', choices: [ "published", "deprecated", "unpublished" ], description: 'xxx')
         choice(name: 'API_PRODUCT_PUBLISH', choices: [ "true", "false" ], description: 'xxx')
+        
     }
     environment {
         KONNECT_ADDRESS             = credentials('konnect-address')
@@ -19,6 +24,51 @@ pipeline {
     }
 
     stages {
+
+        stage('Check Prerequisites') {
+            steps {
+                sh '''
+                    # Check that deck has been installed
+                    deck version
+                '''
+
+                sh '''
+                    # Check Inso CLI is installed
+                    inso -v
+                '''
+
+                sh '''
+                    # Ping Kong Konnect to check connectivity                    
+                    deck ping \
+                        --konnect-addr ${KONNECT_ADDRESS} \
+                        --konnect-token ${KONNECT_TOKEN} \
+                        --konnect-control-plane-name ${KONNECT_CONTROL_PLANE}
+                '''
+            }
+        }
+
+        stage('Set Variables') {
+            steps {
+                sh '''
+                    # The Konnect Control Plane Name and API Product Names might include characters that need to be URL encoded.
+                    API_PRODUCT_NAME_ENCODED=$(echo ${API_PRODUCT_NAME} | sed 's/ /%20/g')
+                    KONNECT_CONTROL_PLANE_NAME_ENCODED=$(echo ${KONNECT_CONTROL_PLANE} | sed 's/ /%20/g')
+                '''
+
+                sh '''
+                    # The API Product Version name will not be unique if just based on what we extract from the OAS - we need to add the Runtime Group Name to this
+                    API_PRODUCT_VERSION=$(echo ${API_PRODUCT_VERSION}-${KONNECT_CONTROL_PLANE_NAME_ENCODED})
+                '''
+
+                sh '''
+                    # Use the Konnect Control Plane Name to search for the ID using the Konnect Control Plane API
+                    KONNECT_CONTROL_PLANE_ID=$(curl \
+                        --url "${KONNECT_ADDRESS}/v2/control-planes?filter%5Bname%5D=${KONNECT_CONTROL_PLANE_NAME_ENCODED}" \
+                        --header "accept: */*"  \
+                        --header "Authorization: Bearer ${KONNECT_TOKEN}" | jq -r '.data[0].id')
+                '''
+            }
+        }
 
         stage('Lint OAS') {
             steps {
@@ -57,15 +107,6 @@ pipeline {
                 '''
                 
                 sh '''
-                    echo "Ping Kong Konnect"
-                    
-                    deck ping \
-                        --konnect-addr ${KONNECT_ADDRESS} \
-                        --konnect-token ${KONNECT_TOKEN} \
-                        --konnect-control-plane-name ${KONNECT_CONTROL_PLANE}
-                '''
-
-                sh '''
                     echo "Diff declarative config"
                     
                     deck diff \
@@ -96,13 +137,19 @@ pipeline {
         stage('Deploy Kong Declarative Configuration') {
             steps {
                 sh '''
-                    
+                    # Uses the deck sync command to push our generated Kong Declarative Configuration to the Kong Konnect Control Plane
                     deck sync \
                         --state kong.yaml \
                         --konnect-addr ${KONNECT_ADDRESS} \
                         --konnect-token ${KONNECT_TOKEN} \
                         --konnect-control-plane-name ${KONNECT_CONTROL_PLANE} \
                         --select-tag ${SERVICE_TAGS}
+                    
+                    # Set a Variable containing the Service ID of the Service that we deployed - we need this to link the API Product to a Kong Service
+                    echo "SERVICE_ID=$(curl \
+                        --url "${KONNECT_ADDRESS}/v2/runtime-groups/${KONNECT_CONTROL_PLANE_ID}}/core-entities/services?tags=${SERVICE_TAGS}" \
+                        --header 'accept: application/json' \
+                        --header "Authorization: Bearer ${KONNECT_TOKEN}" | jq -r '.data[0].id')
                  '''
             }
         }
@@ -124,6 +171,7 @@ pipeline {
 
 
                     # Path to the folder containing files
+
                     PORTAL_ASSETS_FOLDER="./api/portal_assets/"
 
                     mkdir -p docs
@@ -166,8 +214,6 @@ pipeline {
                     # Create a new API Product Version if the API Product Version ID from the previous script is null
 
                     if [[ "${KONNECT_API_PRODUCT_VERSION_ID}" == "null" ]]; then
-
-                        SERVICE_ID=bebc516a-61ba-54d2-a1f8-84351acf6c4d
 
                         KONNECT_API_PRODUCT_VERSION_ID=$(curl -X POST \
                             --url ${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}/product-versions \
