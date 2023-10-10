@@ -7,8 +7,8 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'KONNECT_ADDRESS', defaultValue: '4abacaf1-47dc-4c07-83ff-a8801782277e', description: 'xxx')
-        string(name: 'KONNECT_CONTROL_PLANE', defaultValue: 'https://eu.api.konghq.com', description: 'xxx')
+        string(name: 'KONNECT_ADDRESS', defaultValue: 'https://eu.api.konghq.com', description: 'xxx')
+        string(name: 'KONNECT_CONTROL_PLANE', defaultValue: 'hr-dev', description: 'xxx')
         string(name: 'KONNECT_PORTAL', defaultValue: '4abacaf1-47dc-4c07-83ff-a8801782277e', description: 'xxx')
         string(name: 'API_PRODUCT_NAME', defaultValue: 'Employees Directory', description: 'xxx')
         string(name: 'API_PRODUCT_DESCRIPTION', defaultValue: 'demo', description: 'xxx')
