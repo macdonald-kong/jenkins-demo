@@ -124,30 +124,24 @@ pipeline {
                 '''
 
                 sh '''
-                    echo "Prepare Static Documentation"
-                    
-                    mkdir -p "$(pwd)/docs"
-
-                    for entry in $(pwd)/api/portal_assets/*
-                    do
-                        filename=$(echo "$entry" | sed 's#.*/\([^/]*\)\.md#\1#')
-                        content=$(base64 -i "$entry")
-                        echo "{\"slug\":\"$filename\",\"status\":\"published\",\"title\":\"$filename\",\"content\":\"$content\"}" >> "./docs/${filename}.json"
-                        echo "Processed: $entry"
-                    done
-                '''
-
-                sh '''
                     echo "Upload Static Documentation"
                     
-                    for entry in $(pwd)/docs/*
-                    
-                    do
-                        curl -X POST ${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}/documents \
-                            --header "Authorization: Bearer ${KONNECT_TOKEN}" \
-                            --header "Content-Type: application/json" \
-                            -d @$entry
-                    done
+                    generate_document_data()
+                    {
+                        cat <<EOF
+                    {
+                        "slug": "test",
+                        "status": "test",
+                        "title": "test",
+                        "content": "test"
+                    }
+                    EOF
+                    }
+
+                    curl -s -H "Authorization: Bearer ${KONNECT_TOKEN}" -X POST https://eu.api.konghq.com/konnect-api/api/api-products/${API_PRODUCT_ID}/documents \
+                        -H 'Content-Type: application/json' \
+                        -d "$(generate_document_data)" > /dev/null
+
                 '''
             }
         }
