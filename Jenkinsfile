@@ -1,8 +1,3 @@
-def API_PRODUCT_NAME_ENCODED
-def KONNECT_CONTROL_PLANE_NAME_ENCODED
-def KONNECT_CONTROL_PLANE_ID
-def SERVICE_ID
-
 pipeline {
     agent any
 
@@ -21,6 +16,11 @@ pipeline {
     environment {
         KONNECT_TOKEN               = credentials('konnect-token')
         KONG_GATEWAY_URL            = credentials('gateway-url')
+
+        API_PRODUCT_NAME_ENCODED            = ''
+        KONNECT_CONTROL_PLANE_NAME_ENCODED  = ''
+        KONNECT_CONTROL_PLANE_ID            = ''
+        SERVICE_ID                          = ''
     }
 
     stages {
