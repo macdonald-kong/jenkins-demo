@@ -7,18 +7,18 @@ pipeline {
     agent any
 
     parameters {
+        string(name: 'KONNECT_ADDRESS', defaultValue: '4abacaf1-47dc-4c07-83ff-a8801782277e', description: 'xxx')
+        string(name: 'KONNECT_CONTROL_PLANE', defaultValue: 'https://eu.api.konghq.com', description: 'xxx')
         string(name: 'KONNECT_PORTAL', defaultValue: '4abacaf1-47dc-4c07-83ff-a8801782277e', description: 'xxx')
         string(name: 'API_PRODUCT_NAME', defaultValue: 'Employees Directory', description: 'xxx')
         string(name: 'API_PRODUCT_DESCRIPTION', defaultValue: 'demo', description: 'xxx')
-        string(name: 'API_PRODUCT_VERSION', defaultValue: '1.0.1', description: 'xxx')
-        string(name: 'SERVICE_TAGS', defaultValue: 'employees-directory-v1-dev', description: 'xxx')
-        choice(name: 'API_PRODUCT_VERSION_STATUS', choices: [ "published", "deprecated", "unpublished" ], description: 'xxx')
         choice(name: 'API_PRODUCT_PUBLISH', choices: [ "true", "false" ], description: 'xxx')
-        
+        string(name: 'API_PRODUCT_VERSION', defaultValue: '1.0.1', description: 'xxx')
+        choice(name: 'API_PRODUCT_VERSION_STATUS', choices: [ "published", "deprecated", "unpublished" ], description: 'xxx')
+        string(name: 'SERVICE_TAGS', defaultValue: 'employees-directory-v1-dev', description: 'xxx')
+
     }
     environment {
-        KONNECT_ADDRESS             = credentials('konnect-address')
-        KONNECT_CONTROL_PLANE       = credentials('konnect-control-plane')
         KONNECT_TOKEN               = credentials('konnect-token')
         KONG_GATEWAY_URL            = credentials('gateway-url')
     }
@@ -146,7 +146,7 @@ pipeline {
                         --select-tag ${SERVICE_TAGS}
                     
                     # Set a Variable containing the Service ID of the Service that we deployed - we need this to link the API Product to a Kong Service
-                    echo "SERVICE_ID=$(curl \
+                    echo SERVICE_ID=$(curl \
                         --url "${KONNECT_ADDRESS}/v2/runtime-groups/${KONNECT_CONTROL_PLANE_ID}}/core-entities/services?tags=${SERVICE_TAGS}" \
                         --header 'accept: application/json' \
                         --header "Authorization: Bearer ${KONNECT_TOKEN}" | jq -r '.data[0].id')
