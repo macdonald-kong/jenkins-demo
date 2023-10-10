@@ -147,8 +147,7 @@ pipeline {
                     TMP_SERVICE_ID =  sh(script: '''
                         curl --url "${KONNECT_ADDRESS}/v2/control-planes/${KONNECT_CONTROL_PLANE_ID}/core-entities/services?tags=${SERVICE_TAGS}" \
                         --header 'accept: application/json' \
-                        --header "Authorization: Bearer ${KONNECT_TOKEN}" \ 
-                        | jq -r \'.data[0].id\'
+                        --header "Authorization: Bearer ${KONNECT_TOKEN}" | jq -r \'.data[0].id\'
                         ''', returnStdout: true).trim()
                     
                     env.SERVICE_ID = TMP_SERVICE_ID
