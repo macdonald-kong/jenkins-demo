@@ -11,11 +11,11 @@ pipeline {
         choice(name: 'API_PRODUCT_VERSION_STATUS', choices: [ "published", "deprecated", "unpublished" ], description: 'xxx')
         choice(name: 'API_PRODUCT_PUBLISH', choices: [ "true", "false" ], description: 'xxx')
     }
-
     environment {
         KONNECT_ADDRESS             = credentials('konnect-address')
         KONNECT_CONTROL_PLANE       = credentials('konnect-control-plane')
         KONNECT_TOKEN               = credentials('konnect-token')
+        KONG_GATEWAY_URL            = credentials('gateway-url')
     }
 
     stages {
