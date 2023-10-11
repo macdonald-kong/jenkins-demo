@@ -72,26 +72,47 @@ pipeline {
         stage('Set Variables') {
             steps {
                 script {
-                    // The Konnect Control Plane Name and API Product Names might include characters that need to be URL encoded.
-                    TMP_API_PRODUCT_NAME_ENCODED = sh (script: 'echo ${API_PRODUCT_NAME} | sed \'s/ /%20/g\'', returnStdout: true).trim()
-                    env.API_PRODUCT_NAME_ENCODED = TMP_API_PRODUCT_NAME_ENCODED
 
+                    // xxx
+                    TMP_API_PRODUCT_NAME = sh (script: 'yq .info.title ./api/oas/spec.yml', returnStdout: true).trim()
+                    env.API_PRODUCT_NAME = TMP_API_PRODUCT_NAME
+                    echo "API Product Name: $TMP_API_PRODUCT_NAME"
+
+                    // The Konnect Control Plane Name might include characters that need to be URL encoded.
+                    TMP_API_PRODUCT_NAME_ENCODED = sh (script: 'echo ${TMP_API_PRODUCT_NAME} | sed \'s/ /%20/g\'', returnStdout: true).trim()
+                    env.API_PRODUCT_NAME_ENCODED = TMP_API_PRODUCT_NAME_ENCODED
+                    echo "API Product Name Encoded: $API_PRODUCT_NAME_ENCODED"
+
+                    // The API Product Name might include characters that need to be URL encoded.
                     TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED = sh (script: 'echo ${KONNECT_CONTROL_PLANE} | sed \'s/ /%20/g\'', returnStdout: true).trim()
                     env.KONNECT_CONTROL_PLANE_NAME_ENCODED = TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED
+                    echo "Konnect Control Plane Name Encoded: $TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED"
 
                     // The API Product Version name will not be unique if just based on what we extract from the OAS - we need to add the Control Plane Name to this
                     TMP_API_PRODUCT_VERSION = sh (script: 'echo ${API_PRODUCT_VERSION}-${KONNECT_CONTROL_PLANE_NAME_ENCODED}', returnStdout: true).trim()
                     env.API_PRODUCT_VERSION = TMP_API_PRODUCT_VERSION
-                    
+                    echo "API Product Version Name: $TMP_API_PRODUCT_VERSION"
+
                     // Use the Konnect Control Plane Name to search for the ID using the Konnect Control Plane API
                     TMP_KONNECT_CONTROL_PLANE_ID = sh (script: 'curl --url "${KONNECT_ADDRESS}/v2/control-planes?filter%5Bname%5D=${KONNECT_CONTROL_PLANE_NAME_ENCODED}" --header "accept: */*" --header "Authorization: Bearer ${KONNECT_TOKEN}" | jq -r \'.data[0].id\'', returnStdout: true).trim()
                     env.KONNECT_CONTROL_PLANE_ID = TMP_KONNECT_CONTROL_PLANE_ID
+                    echo "Konnect Control Plane ID: $TMP_KONNECT_CONTROL_PLANE_ID"
 
                     // Extract API Product Description, Version and Gateway Service Tags from the OAS
-                    env.API_PRODUCT_DESCRIPTION = sh (script: 'yq .info.description ./api/oas/spec.yml', returnStdout: true).trim()
-                    env.API_PRODUCT_VERSION = sh (script: 'yq .info.version ./api/oas/spec.yml', returnStdout: true).trim()
-                    env.API_PRODUCT_NAME = sh (script: 'yq .info.title ./api/oas/spec.yml', returnStdout: true).trim()
-                    env.GATEWAY_SERVICE_TAGS = sh (script: 'yq .info.title ./api/oas/spec.yml', returnStdout: true).trim()
+                    TMP_API_PRODUCT_DESCRIPTION = sh (script: 'yq .info.description ./api/oas/spec.yml', returnStdout: true).trim()
+                    env.API_PRODUCT_DESCRIPTION = TMP_API_PRODUCT_DESCRIPTION
+                    echo "API Product Description ID: $TMP_API_PRODUCT_DESCRIPTION"
+
+                    // xxx
+                    TMP_API_PRODUCT_VERSION = sh (script: 'yq .info.version ./api/oas/spec.yml', returnStdout: true).trim()
+                    env.API_PRODUCT_VERSION = TMP_API_PRODUCT_VERSION
+                    echo "API Product Version ID: $TMP_API_PRODUCT_VERSION"
+
+                    // xxx
+                    TMP_GATEWAY_SERVICE_TAGS = sh (script: 'yq .info.title ./api/oas/spec.yml', returnStdout: true).trim()
+                    env.GATEWAY_SERVICE_TAGS = TMP_GATEWAY_SERVICE_TAGS
+                    echo "Gateway Service Tags: $TMP_GATEWAY_SERVICE_TAGS"
+
                     }
             }
         }
