@@ -295,7 +295,8 @@ pipeline {
                                     "control_plane_id":"'"${KONNECT_CONTROL_PLANE_ID}"'",
                                     "id":"'"${SERVICE_ID}"'"
                                 }
-                            }' | jq -r '.id')
+                            }' \
+                        | jq -r '.id'
                     ''', returnStdout: true).trim()
 
                     env.API_PRODUCT_VERSION_ID = TMP_API_PRODUCT_VERSION_ID
