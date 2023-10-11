@@ -6,7 +6,7 @@ This is a markdown file describing the employees directory service.  Please find
 
 Register your application here to get a client ID and Secret:
 
-<https://portal.mackong.net/my-apps>
+<https://dae892db4860.eu.portal.konghq.com/my-apps>
 
 ## 2. Get Access Token
 
