@@ -182,6 +182,7 @@ pipeline {
         stage('Delete Current API Product Documentation') {
             when {
                 expression { env.API_PRODUCT_ID != 'null' }
+            }
             steps {
                 script {
                 // Delete the current API Documentation so that we can upload the new ones with any updates
