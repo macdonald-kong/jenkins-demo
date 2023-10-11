@@ -51,7 +51,7 @@ pipeline {
                 sh 'jq -V'
 
                 // Check that yq has been installed
-                sh 'yq version'
+                sh 'yq --version'
 
                 // Check that deck has been installed
                 sh 'deck version'
