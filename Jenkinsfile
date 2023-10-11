@@ -203,6 +203,8 @@ pipeline {
 
         stage('Delete Current API Product Documentation') {
             steps {
+                script {
+
                 // Delete the current API Documentation so that we can upload the new ones with any updates
                 // Very inneficient - will improve later
 
@@ -223,6 +225,7 @@ pipeline {
                         response=$(curl -X DELETE --header "Authorization: Bearer ${KONNECT_TOKEN}" -s "$delete_url")
                     done
                 '''
+                }
             }
         }
 
