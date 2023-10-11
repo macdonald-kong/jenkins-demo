@@ -184,18 +184,15 @@ pipeline {
                 expression { env.API_PRODUCT_ID != 'null' }
             }
             steps {
-                script {
                 // Delete the current API Documentation so that we can upload the new ones with any updates
                 // Very inneficient - will improve later
-                DOCUMENTS_JSON = sh(script: '''
-                    curl --url ${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}/documents \
-                    --header "Authorization: Bearer ${KONNECT_TOKEN}" \
-                    --header "Content-Type: application/json" \
-                ''', returnStdout: true).trim()
-
-                echo "Currently available documentation: $DOCUMENTS_JSON"
-
                 sh '''
+                    DOCUMENTS_JSON=$(curl --url ${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}/documents \
+                        --header "Authorization: Bearer ${KONNECT_TOKEN}" \
+                        --header "Content-Type: application/json")
+
+                    echo "Currently available documentation: $DOCUMENTS_JSON"
+
                     # Extract document IDs and send DELETE requests
                     ids=$(echo $DOCUMENTS_JSON | jq -r '.data[].id')
 
@@ -206,7 +203,6 @@ pipeline {
                 '''
                 }
             }
-        }
 
         stage('Create API Product') {
             when {
