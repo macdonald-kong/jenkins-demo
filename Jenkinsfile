@@ -220,7 +220,7 @@ pipeline {
 
                     for id in $ids; do
                         delete_url="$KONNECT_ADDRESS/v2/api-products/$API_PRODUCT_ID/documents/$id"
-                        response=$(curl -X DELETE -w "%{http_code}" --header "Authorization: Bearer ${KONNECT_TOKEN}" -s "$delete_url")
+                        response=$(curl -X DELETE --header "Authorization: Bearer ${KONNECT_TOKEN}" -s "$delete_url")
                     done
                 '''
             }
