@@ -27,24 +27,31 @@ pipeline {
         string(name: 'KONNECT_CONTROL_PLANE_NAME_ENCODED', defaultValue: '')
 
         string(name: 'KONNECT_PORTAL', defaultValue: '4abacaf1-47dc-4c07-83ff-a8801782277e', description: 'xxx')
-        string(name: 'API_PRODUCT_NAME', defaultValue: 'Employees Directory', description: 'xxx')
 
-        string(name: 'API_PRODUCT_DESCRIPTION', defaultValue: 'This is a sample Employee Directory Server based on the OpenAPI 3.0 specification.', description: 'xxx')
-        choice(name: 'API_PRODUCT_PUBLISH', choices: [ "true", "false" ], description: 'xxx')
-        string(name: 'API_PRODUCT_VERSION', defaultValue: '1.0.1', description: 'xxx')
-        choice(name: 'API_PRODUCT_VERSION_STATUS', choices: [ "published", "deprecated", "unpublished" ], description: 'xxx')
-        string(name: 'API_PRODUCT_NAME_ENCODED', defaultValue: '')
         string(name: 'API_PRODUCT_ID', defaultValue: '')
-        string(name: 'API_PRODUCT_VERSION_ID', defaultValue: '')
+        string(name: 'API_PRODUCT_NAME', defaultValue: '', description: 'xxx')
+        string(name: 'API_PRODUCT_NAME_ENCODED', defaultValue: '')
+        string(name: 'API_PRODUCT_DESCRIPTION', defaultValue: '', description: 'xxx')
+        choice(name: 'API_PRODUCT_PUBLISH', choices: [ "true", "false" ], description: 'xxx')
 
-        string(name: 'SERVICE_TAGS', defaultValue: 'employees-directory-v1-dev', description: 'xxx')
-        string(name: 'SERVICE_ID', defaultValue: '')
+        string(name: 'API_PRODUCT_VERSION_ID', defaultValue: '')
+        string(name: 'API_PRODUCT_VERSION', defaultValue: '', description: 'xxx')
+        choice(name: 'API_PRODUCT_VERSION_STATUS', choices: [ "published", "deprecated", "unpublished" ], description: 'xxx')
+
+        string(name: 'GATEWAY_SERVICE_ID', defaultValue: '')
+        string(name: 'GATEWAY_SERVICE_TAGS', defaultValue: '', description: 'xxx')
     }
 
     stages {
 
         stage('Check Prerequisites') {
             steps {
+
+                // Check that jq has been installed
+                sh 'jq -V'
+
+                // Check that yq has been installed
+                sh 'yq version'
 
                 // Check that deck has been installed
                 sh 'deck version'
@@ -66,19 +73,25 @@ pipeline {
             steps {
                 script {
                     // The Konnect Control Plane Name and API Product Names might include characters that need to be URL encoded.
-                    TMP_API_PRODUCT_NAME_ENCODED =  sh (script: 'echo ${API_PRODUCT_NAME} | sed \'s/ /%20/g\'', returnStdout: true).trim()
+                    TMP_API_PRODUCT_NAME_ENCODED = sh (script: 'echo ${API_PRODUCT_NAME} | sed \'s/ /%20/g\'', returnStdout: true).trim()
                     env.API_PRODUCT_NAME_ENCODED = TMP_API_PRODUCT_NAME_ENCODED
 
-                    TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED =  sh (script: 'echo ${KONNECT_CONTROL_PLANE} | sed \'s/ /%20/g\'', returnStdout: true).trim()
+                    TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED = sh (script: 'echo ${KONNECT_CONTROL_PLANE} | sed \'s/ /%20/g\'', returnStdout: true).trim()
                     env.KONNECT_CONTROL_PLANE_NAME_ENCODED = TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED
 
                     // The API Product Version name will not be unique if just based on what we extract from the OAS - we need to add the Control Plane Name to this
-                    TMP_API_PRODUCT_VERSION =  sh (script: 'echo ${API_PRODUCT_VERSION}-${KONNECT_CONTROL_PLANE_NAME_ENCODED}', returnStdout: true).trim()
+                    TMP_API_PRODUCT_VERSION = sh (script: 'echo ${API_PRODUCT_VERSION}-${KONNECT_CONTROL_PLANE_NAME_ENCODED}', returnStdout: true).trim()
                     env.API_PRODUCT_VERSION = TMP_API_PRODUCT_VERSION
                     
                     // Use the Konnect Control Plane Name to search for the ID using the Konnect Control Plane API
-                    TMP_KONNECT_CONTROL_PLANE_ID =  sh (script: 'curl --url "${KONNECT_ADDRESS}/v2/control-planes?filter%5Bname%5D=${KONNECT_CONTROL_PLANE_NAME_ENCODED}" --header "accept: */*" --header "Authorization: Bearer ${KONNECT_TOKEN}" | jq -r \'.data[0].id\'', returnStdout: true).trim()
+                    TMP_KONNECT_CONTROL_PLANE_ID = sh (script: 'curl --url "${KONNECT_ADDRESS}/v2/control-planes?filter%5Bname%5D=${KONNECT_CONTROL_PLANE_NAME_ENCODED}" --header "accept: */*" --header "Authorization: Bearer ${KONNECT_TOKEN}" | jq -r \'.data[0].id\'', returnStdout: true).trim()
                     env.KONNECT_CONTROL_PLANE_ID = TMP_KONNECT_CONTROL_PLANE_ID
+
+                    // Extract API Product Description, Version and Gateway Service Tags from the OAS
+                    env.API_PRODUCT_DESCRIPTION = sh (script: 'yq .info.description ./api/oas/spec.yml', returnStdout: true).trim()
+                    env.API_PRODUCT_VERSION = sh (script: 'yq .info.version ./api/oas/spec.yml', returnStdout: true).trim()
+                    env.API_PRODUCT_NAME = sh (script: 'yq .info.title ./api/oas/spec.yml', returnStdout: true).trim()
+                    env.GATEWAY_SERVICE_TAGS = sh (script: 'yq .info.title ./api/oas/spec.yml', returnStdout: true).trim()
                     }
             }
         }
@@ -97,7 +110,7 @@ pipeline {
                     deck file openapi2kong \
                         --spec ./api/oas/spec.yml \
                         --format yaml \
-                        --select-tag ${SERVICE_TAGS} \
+                        --select-tag ${GATEWAY_SERVICE_TAGS} \
                         --output-file kong-generated.yaml
                 '''
 
@@ -117,7 +130,7 @@ pipeline {
                         --konnect-addr ${KONNECT_ADDRESS} \
                         --konnect-token ${KONNECT_TOKEN} \
                         --konnect-control-plane-name ${KONNECT_CONTROL_PLANE} \
-                        --select-tag ${SERVICE_TAGS}
+                        --select-tag ${GATEWAY_SERVICE_TAGS}
                  '''
             }
         }
@@ -145,7 +158,7 @@ pipeline {
                         --konnect-addr ${KONNECT_ADDRESS} \
                         --konnect-token ${KONNECT_TOKEN} \
                         --konnect-control-plane-name ${KONNECT_CONTROL_PLANE} \
-                        --select-tag ${SERVICE_TAGS}
+                        --select-tag ${GATEWAY_SERVICE_TAGS}
                  '''
             }
         }
@@ -154,15 +167,15 @@ pipeline {
             steps {
                 script {
                     // Set a Variable containing the Service ID of the Service that we deployed - we need this to link the API Product to a Kong Service
-                    TMP_SERVICE_ID =  sh(script: '''
-                        curl --url "${KONNECT_ADDRESS}/v2/control-planes/${KONNECT_CONTROL_PLANE_ID}/core-entities/services?tags=${SERVICE_TAGS}" \
+                    TMP_GATEWAY_SERVICE_ID =  sh(script: '''
+                        curl --url "${KONNECT_ADDRESS}/v2/control-planes/${KONNECT_CONTROL_PLANE_ID}/core-entities/services?tags=${GATEWAY_SERVICE_TAGS}" \
                         --header 'accept: application/json' \
                         --header "Authorization: Bearer ${KONNECT_TOKEN}" | jq -r \'.data[0].id\'
                         ''', returnStdout: true).trim()
                     
-                    env.SERVICE_ID = TMP_SERVICE_ID
+                    env.GATEWAY_SERVICE_ID = TMP_GATEWAY_SERVICE_ID
 
-                    echo "Gateway Service ID: $TMP_SERVICE_ID"
+                    echo "Gateway Service ID: $TMP_GATEWAY_SERVICE_ID"
                 }
             }
         }
@@ -318,7 +331,7 @@ pipeline {
                                 "deprecated":false,
                                 "gateway_service": {
                                     "control_plane_id":"'"${KONNECT_CONTROL_PLANE_ID}"'",
-                                    "id":"'"${SERVICE_ID}"'"
+                                    "id":"'"${GATEWAY_SERVICE_ID}"'"
                                 }
                             }' \
                         | jq -r '.id'
