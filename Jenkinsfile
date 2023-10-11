@@ -74,7 +74,7 @@ pipeline {
                 script {
 
                     // xxx
-                    TMP_API_PRODUCT_NAME = sh (script: 'yq .info.title ./api/oas/spec.yml', returnStdout: true).trim()
+                    TMP_API_PRODUCT_NAME = sh (script: 'yq .info.title ./api/oas/spec.yml -r', returnStdout: true).trim()
                     env.API_PRODUCT_NAME = TMP_API_PRODUCT_NAME
                     echo "API Product Name: $TMP_API_PRODUCT_NAME"
 
@@ -99,17 +99,17 @@ pipeline {
                     echo "Konnect Control Plane ID: $TMP_KONNECT_CONTROL_PLANE_ID"
 
                     // Extract API Product Description, Version and Gateway Service Tags from the OAS
-                    TMP_API_PRODUCT_DESCRIPTION = sh (script: 'yq .info.description ./api/oas/spec.yml', returnStdout: true).trim()
+                    TMP_API_PRODUCT_DESCRIPTION = sh (script: 'yq .info.description ./api/oas/spec.yml -r', returnStdout: true).trim()
                     env.API_PRODUCT_DESCRIPTION = TMP_API_PRODUCT_DESCRIPTION
                     echo "API Product Description ID: $TMP_API_PRODUCT_DESCRIPTION"
 
                     // xxx
-                    TMP_API_PRODUCT_VERSION = sh (script: 'yq .info.version ./api/oas/spec.yml', returnStdout: true).trim()
+                    TMP_API_PRODUCT_VERSION = sh (script: 'yq .info.version ./api/oas/spec.yml -r', returnStdout: true).trim()
                     env.API_PRODUCT_VERSION = TMP_API_PRODUCT_VERSION
                     echo "API Product Version ID: $TMP_API_PRODUCT_VERSION"
 
                     // xxx
-                    TMP_GATEWAY_SERVICE_TAGS = sh (script: 'yq .info.title ./api/oas/spec.yml', returnStdout: true).trim()
+                    TMP_GATEWAY_SERVICE_TAGS = sh (script: 'yq .info.title ./api/oas/spec.yml -r', returnStdout: true).trim()
                     env.GATEWAY_SERVICE_TAGS = TMP_GATEWAY_SERVICE_TAGS
                     echo "Gateway Service Tags: $TMP_GATEWAY_SERVICE_TAGS"
 
