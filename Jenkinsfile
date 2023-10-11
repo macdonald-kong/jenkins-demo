@@ -263,7 +263,8 @@ pipeline {
                         curl --request GET \
                             --url ${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}/product-versions?filter%5Bname%5D=${API_PRODUCT_VERSION} \
                             --header "Authorization: Bearer ${KONNECT_TOKEN}" \
-                            --header "Accept: application/json" | jq -r '.data[0].id')
+                            --header "Accept: application/json" \ 
+                            | jq -r '.data[0].id'
                     ''', returnStdout: true).trim()
 
                     env.API_PRODUCT_VERSION_ID = TMP_API_PRODUCT_VERSION_ID
