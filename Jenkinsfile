@@ -197,7 +197,7 @@ pipeline {
 
                 sh '''
                     # Extract document IDs and send DELETE requests
-                    ids=$(echo "$DOCUMENTS_JSON" | jq -r '.data[].id')
+                    ids=$(echo $DOCUMENTS_JSON | jq -r '.data[].id')
 
                     for id in $ids; do
                         curl -X DELETE --url $KONNECT_ADDRESS/v2/api-products/$API_PRODUCT_ID/documents/$id \
