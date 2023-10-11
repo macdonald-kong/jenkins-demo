@@ -221,8 +221,7 @@ pipeline {
                     ids=$(echo "$DOCUMENTS_JSON" | jq -r '.data[].id')
 
                     for id in $ids; do
-                        delete_url="$KONNECT_ADDRESS/v2/api-products/$API_PRODUCT_ID/documents/$id"
-                        response=$(curl -X DELETE --header "Authorization: Bearer ${KONNECT_TOKEN}" -s "$delete_url")
+                        curl -X DELETE --header "Authorization: Bearer ${KONNECT_TOKEN}" -s "$KONNECT_ADDRESS/v2/api-products/$API_PRODUCT_ID/documents/$id"
                     done
                 '''
                 }
