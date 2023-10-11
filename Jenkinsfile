@@ -189,8 +189,8 @@ pipeline {
                 expression { env.API_PRODUCT_ID != 'null' }
             }
             steps {
-                // Delete the current API Documentation so that we can upload the new ones with any updates
-                // Very inneficient - will improve later
+                // Delete the current API Product documentation so that we can upload the new ones with any updates
+                // This is very inneficient - will improve later
                 sh '''
                     DOCUMENTS_JSON=$(curl --url ${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}/documents \
                         --header "Authorization: Bearer ${KONNECT_TOKEN}" \
@@ -273,6 +273,31 @@ pipeline {
                 }
             }
         }
+
+        stage('Delete API Product Version OAS') {
+            when {
+                expression { env.API_PRODUCT_VERSION_ID != 'null' }
+            }
+            steps {
+                // Delete the current Product API Version OAS so that we can upload the new one with any updates
+                // This is very inneficient - will improve later
+                sh '''
+                    OAS_JSON=$(curl --url ${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}/product-versions/${API_PRODUCT_VERSION_ID}/specifications \
+                        --header "Authorization: Bearer ${KONNECT_TOKEN}" \
+                        --header "Content-Type: application/json")
+
+                    echo "Currently available oas: $OAS_JSON"
+
+                    # Extract oas IDs and send DELETE requests
+                    ids=$(echo $OAS_JSON | jq -r '.data[].id')
+
+                    for id in $ids; do
+                        curl -X DELETE --url $KONNECT_ADDRESS/v2/api-products/$API_PRODUCT_ID/product-versions/${API_PRODUCT_VERSION_ID}/specifications/$id \
+                            --header "Authorization: Bearer ${KONNECT_TOKEN}" 
+                    done
+                '''
+                }
+            }
 
         stage('Create API Product Version') {
             when {

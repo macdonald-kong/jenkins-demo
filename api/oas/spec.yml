@@ -4,7 +4,7 @@ openapi: 3.0.2
 
 info:
   title: employees-directory-v1-dev
-  description: "This is a sample Employee Directory Server based on the OpenAPI 3.0 specification."
+  description: "This is a sample Employee Directory Server based on the OpenAPI 3.0 specification.  Used for demonstration purposes only."
   termsOfService: https://konghq.com/terms
   contact:
     email: david.macdonald@konghq.com
