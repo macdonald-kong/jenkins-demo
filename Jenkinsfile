@@ -179,35 +179,13 @@ pipeline {
             }        
         }
 
-        stage('Create API Product') {
-            when {
-                expression { env.API_PRODUCT_ID == 'null' }
-            }
-            steps {
-                script {
-                    // Create a new API Product if the API Product ID from the previous script is null
-                    TMP_API_PRODUCT_ID = sh(script: '''
-                        curl --url ${KONNECT_ADDRESS}/v2/api-products \
-                        --header "Authorization: Bearer ${KONNECT_TOKEN}" \
-                        --header "Content-Type: application/json" \
-                        --data '{ "name": "'"$API_PRODUCT_NAME"'", "description": "'"$API_PRODUCT_DESCRIPTION"'" }' \
-                        | jq -r .id
-                    ''', returnStdout: true).trim()
-
-                    env.API_PRODUCT_ID = TMP_API_PRODUCT_ID
-
-                    echo "API Product ID: $TMP_API_PRODUCT_ID"
-                }
-            }        
-        }
-
         stage('Delete Current API Product Documentation') {
+            when {
+                expression { (env.API_PRODUCT_ID ?? 'null') != 'null' }
             steps {
                 script {
-
                 // Delete the current API Documentation so that we can upload the new ones with any updates
                 // Very inneficient - will improve later
-
                 DOCUMENTS_JSON = sh(script: '''
                     curl --url ${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}/documents \
                     --header "Authorization: Bearer ${KONNECT_TOKEN}" \
@@ -221,11 +199,34 @@ pipeline {
                     ids=$(echo "$DOCUMENTS_JSON" | jq -r '.data[].id')
 
                     for id in $ids; do
-                        curl -X DELETE --header "Authorization: Bearer ${KONNECT_TOKEN}" -s "$KONNECT_ADDRESS/v2/api-products/$API_PRODUCT_ID/documents/$id"
+                        curl -X DELETE --url $KONNECT_ADDRESS/v2/api-products/$API_PRODUCT_ID/documents/$id \
+                            --header "Authorization: Bearer ${KONNECT_TOKEN}" 
                     done
                 '''
                 }
             }
+        }
+
+        stage('Create API Product') {
+            when {
+                expression { env.API_PRODUCT_ID == 'null' }
+            }
+            steps {
+                script {
+                    // Create a new API Product if the API Product ID from the previous script is null
+                    TMP_API_PRODUCT_ID = sh(script: '''
+                        curl --url ${KONNECT_ADDRESS}/v2/api-products \
+                            --header "Authorization: Bearer ${KONNECT_TOKEN}" \
+                            --header "Content-Type: application/json" \
+                            --data '{ "name": "'"$API_PRODUCT_NAME"'", "description": "'"$API_PRODUCT_DESCRIPTION"'" }' \
+                        | jq -r .id
+                    ''', returnStdout: true).trim()
+
+                    env.API_PRODUCT_ID = TMP_API_PRODUCT_ID
+
+                    echo "API Product ID: $TMP_API_PRODUCT_ID"
+                }
+            }        
         }
 
         stage('Upload API Product Documentation') {
