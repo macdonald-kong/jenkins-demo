@@ -432,11 +432,11 @@ pipeline {
                 '''
             }
         }
-        post {
-            always {
-                archiveArtifacts artifacts: './kong-backup.yaml', fingerprint: true
-                deleteDir() /* clean up our workspace */
-            }
+    }
+    post {
+        always {
+            archiveArtifacts artifacts: './kong-backup.yaml', fingerprint: true
+            deleteDir() /* clean up our workspace */
         }
     }
 }
