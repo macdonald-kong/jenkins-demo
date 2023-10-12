@@ -78,13 +78,13 @@ pipeline {
                     env.API_PRODUCT_NAME = TMP_API_PRODUCT_NAME
                     echo "API Product Name: $TMP_API_PRODUCT_NAME"
 
-                    // The Konnect Control Plane Name might include characters that need to be URL encoded.
-                    TMP_API_PRODUCT_NAME_ENCODED = sh (script: "echo ${TMP_API_PRODUCT_NAME} | sed 's/ /%20/g'", returnStdout: true).trim()
+                    // The Konnect Control Plane Name might include spaces that we are changing to dashes.
+                    TMP_API_PRODUCT_NAME_ENCODED = sh (script: "echo ${TMP_API_PRODUCT_NAME} | sed 's/ /-/g'", returnStdout: true).trim()
                     env.API_PRODUCT_NAME_ENCODED = TMP_API_PRODUCT_NAME_ENCODED
                     echo "API Product Name Encoded: $API_PRODUCT_NAME_ENCODED"
 
-                    // The API Product Name might include characters that need to be URL encoded.
-                    TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED = sh (script: "echo ${KONNECT_CONTROL_PLANE} | sed 's/ /%20/g'", returnStdout: true).trim()
+                    // The API Product Name might include spaces that we are changing to dashes.
+                    TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED = sh (script: "echo ${KONNECT_CONTROL_PLANE} | sed 's/ /-/g'", returnStdout: true).trim()
                     env.KONNECT_CONTROL_PLANE_NAME_ENCODED = TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED
                     echo "Konnect Control Plane Name Encoded: $TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED"
 

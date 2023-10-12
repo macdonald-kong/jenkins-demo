@@ -1,6 +1,6 @@
 plugins:
 - name: rate-limiting
-  service: employees-directory-v1-dev
+  service: employees-directory
   config:
     minute: 120
     policy: local
