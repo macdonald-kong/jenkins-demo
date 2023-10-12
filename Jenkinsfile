@@ -74,16 +74,20 @@ pipeline {
         stage('Export OAS from Insomnia Workspace') {
             steps {
                 // Export OAS from Insomnia Workspace using export command and save into local file.
-                sh ''
-            }
+                sh '''
+                INSO_SPEC_FILE=$(echo -n ./.insomnia/Workspace/*)
+                INSO_SPEC_NAME=$(yq .name $INSO_SPEC_FILE)
+                inso export spec $INSO_SPEC_NAME > ./api/spec.yaml
+                '''
+            } 
         }
-        
+
         stage('Set Variables') {
             steps {
                 script {
 
                     // Extract the API Product name from the title of the OAS
-                    TMP_API_PRODUCT_NAME = sh (script: 'yq .info.title ./api/oas/spec.yml -r', returnStdout: true).trim()
+                    TMP_API_PRODUCT_NAME = sh (script: 'yq .info.title ./api/spec.yaml -r', returnStdout: true).trim()
                     env.API_PRODUCT_NAME = TMP_API_PRODUCT_NAME
                     echo "API Product Name: $TMP_API_PRODUCT_NAME"
 
@@ -103,12 +107,12 @@ pipeline {
                     echo "Konnect Control Plane ID: $TMP_KONNECT_CONTROL_PLANE_ID"
 
                     // Extract API Product Description, Version and Gateway Service Tags from the OAS
-                    TMP_API_PRODUCT_DESCRIPTION = sh (script: 'yq .info.description ./api/oas/spec.yml -r', returnStdout: true).trim()
+                    TMP_API_PRODUCT_DESCRIPTION = sh (script: 'yq .info.description ./api/spec.yaml -r', returnStdout: true).trim()
                     env.API_PRODUCT_DESCRIPTION = TMP_API_PRODUCT_DESCRIPTION
                     echo "API Product Description ID: $TMP_API_PRODUCT_DESCRIPTION"
 
                     // The API Product Version name will not be unique if just based on what we extract from the OAS - we need to add the Control Plane Name to this
-                    TMP_API_PRODUCT_VERSION_RAW = sh (script: 'yq .info.version ./api/oas/spec.yml -r', returnStdout: true).trim()
+                    TMP_API_PRODUCT_VERSION_RAW = sh (script: 'yq .info.version ./api/spec.yaml -r', returnStdout: true).trim()
                     echo "API Product Version ID Raw: $TMP_API_PRODUCT_VERSION_RAW"
 
                     TMP_API_PRODUCT_VERSION = sh (script: "echo $TMP_API_PRODUCT_VERSION_RAW-$KONNECT_CONTROL_PLANE_NAME_ENCODED", returnStdout: true).trim()
@@ -131,7 +135,7 @@ pipeline {
         stage('Lint OAS') {
             steps {
                 // Lint OAS with Inso CLI
-                sh 'inso lint spec ./api/oas/spec.yml'
+                sh 'inso lint spec ./api/spec.yaml'
             }
         }
 
@@ -140,7 +144,7 @@ pipeline {
                 // Generate Kong declarative configuration from Spec
                 sh '''
                     deck file openapi2kong \
-                        --spec ./api/oas/spec.yml \
+                        --spec ./api/spec.yaml \
                         --format yaml \
                         --select-tag ${GATEWAY_SERVICE_TAGS} \
                         --output-file kong-generated.yaml
@@ -383,7 +387,7 @@ pipeline {
             steps {
                 // Add the OAS to the JSON Payload required by the Konnect Product API Version API and output as a file
                 sh '''
-                    base64 -w 0 ./api/oas/spec.yml > oas-encoded.yaml
+                    base64 -w 0 ./api/spec.yaml > oas-encoded.yaml
                     jq --null-input --arg content "$(<oas-encoded.yaml)" '{"name": "oas.yaml", "content": $content}' > product_version_spec.json
                 '''
 
