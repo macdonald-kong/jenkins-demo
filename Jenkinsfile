@@ -39,7 +39,7 @@ pipeline {
 
         string(name: 'GATEWAY_SERVICE_ID', defaultValue: '')
         string(name: 'GATEWAY_SERVICE_TAGS', defaultValue: '', description: 'xxx')
-        string(name: 'GATEWAY_URL', defaultValue: 'http://localhost:8000')
+        string(name: 'GATEWAY_URL', defaultValue: 'http://kong-gateway:8000')
 
         string(name: 'DECK_GATEWAY_SERVICE_NAME', defaultValue: '')
     }
@@ -386,7 +386,7 @@ pipeline {
             steps {
 
                 // Update the specification with the correct Kong Gateway URL location instead of pointing to the backend service.
-                sh "yq -i '.servers[0].url = $KONG_GATEWAY_URL' ./api/spec.yaml"
+                sh "yq -i '.servers[0].url = \"$GATEWAY_URL\"' ./api/spec.yaml -y"
 
                 // Add the OAS to the JSON Payload required by the Konnect Product API Version API and output as a file
                 sh '''
@@ -410,8 +410,10 @@ pipeline {
             steps {
                 // Run the tests defined in our Insomnia Test Suite
                 sh '''
-                    echo tbc
-                 '''
+                    INSO_SPEC_FILE=$(echo -n ./.insomnia/Workspace/*)
+                    INSO_SPEC_NAME=$(yq .name $INSO_SPEC_FILE -r)
+                    inso run test $INSO_SPEC_NAME
+                '''
             }
         }
 

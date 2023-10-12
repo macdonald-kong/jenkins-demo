@@ -5,7 +5,7 @@ modified: 1691442631952
 created: 1687378772238
 name: Base Environment
 data:
-  base_url: http://a8678bbbf79d34ee1ac96dbea2436c84-109539309.eu-west-2.elb.amazonaws.com:8000
+  base_url: http://kong-gateway:8000
   employeeId: "9"
   newEmployeeId: "1234"
 dataPropertyOrder:
