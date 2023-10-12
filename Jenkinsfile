@@ -23,13 +23,15 @@ pipeline {
 
         string(name: 'KONNECT_CONTROL_PLANE_NAME', defaultValue: 'hr-dev', description: 'xxx')
         string(name: 'KONNECT_CONTROL_PLANE_ID', defaultValue: '')
-        string(name: 'KONNECT_CONTROL_PLANE_NAME_ENCODED', defaultValue: '')
+        string(name: 'KONNECT_CONTROL_PLANE_NAME_CLEAN', defaultValue: '')
 
         string(name: 'KONNECT_PORTAL', defaultValue: '4abacaf1-47dc-4c07-83ff-a8801782277e', description: 'xxx')
 
         string(name: 'API_PRODUCT_ID', defaultValue: '')
         string(name: 'API_PRODUCT_NAME', defaultValue: '', description: 'xxx')
-        string(name: 'API_PRODUCT_NAME_ENCODED', defaultValue: '')
+        string(name: 'API_PRODUCT_NAME_ENCODED', defaultValue: '', description: 'xxx')
+        string(name: 'API_PRODUCT_NAME_CLEAN', defaultValue: '', description: 'xxx')
+
         string(name: 'API_PRODUCT_DESCRIPTION', defaultValue: '', description: 'xxx')
         choice(name: 'API_PRODUCT_PUBLISH', choices: [ "true", "false" ], description: 'xxx')
 
@@ -88,20 +90,26 @@ pipeline {
                     // Extract the API Product name from the title of the OAS
                     TMP_API_PRODUCT_NAME = sh (script: 'yq .info.title ./api/spec.yaml -r', returnStdout: true).trim()
                     env.API_PRODUCT_NAME = TMP_API_PRODUCT_NAME
-                    echo "API Product Name: $TMP_API_PRODUCT_NAME"
+                    echo "API Product name from OAS: $TMP_API_PRODUCT_NAME"
 
-                    // The Konnect Control Plane Name might include spaces that we are changing to dashes.
-                    TMP_API_PRODUCT_NAME_ENCODED = sh (script: "echo ${TMP_API_PRODUCT_NAME} | sed 's/ /-/g'", returnStdout: true).trim()
+                    // The API Product name might include spaces that we are changing to dashes.
+                    TMP_API_PRODUCT_NAME_CLEAN = sh (script: "echo ${TMP_API_PRODUCT_NAME} | sed 's/ /-/g'", returnStdout: true).trim()
+                    TMP_API_PRODUCT_NAME_CLEAN = TMP_API_PRODUCT_NAME_CLEAN.toLowerCase()
+                    env.API_PRODUCT_NAME_CLEAN = TMP_API_PRODUCT_NAME_CLEAN
+                    echo "Cleaned API Product name : $API_PRODUCT_NAME_CLEAN"
+
+                    // The API Product name might include spaces that we are encoding - this is important as we need to use this for search.
+                    TMP_API_PRODUCT_NAME_ENCODED = sh (script: "echo ${TMP_API_PRODUCT_NAME} | sed 's/ /%20/g'", returnStdout: true).trim()
                     env.API_PRODUCT_NAME_ENCODED = TMP_API_PRODUCT_NAME_ENCODED
-                    echo "API Product Name Encoded: $API_PRODUCT_NAME_ENCODED"
+                    echo "Encoded API Product name: $API_PRODUCT_NAME_ENCODED"
 
-                    // The API Product Name might include spaces that we are changing to dashes.
-                    TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED = sh (script: "echo ${KONNECT_CONTROL_PLANE_NAME} | sed 's/ /-/g'", returnStdout: true).trim()
-                    env.KONNECT_CONTROL_PLANE_NAME_ENCODED = TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED
-                    echo "Konnect Control Plane Name Encoded: $TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED"
+                    // The Konnect Control Plane name might include spaces that we are changing to dashes.
+                    TMP_KONNECT_CONTROL_PLANE_NAME_CLEAN = sh (script: "echo ${KONNECT_CONTROL_PLANE_NAME} | sed 's/ /-/g'", returnStdout: true).trim()
+                    env.KONNECT_CONTROL_PLANE_NAME_CLEAN = TMP_KONNECT_CONTROL_PLANE_NAME_CLEAN
+                    echo "Cleaned Konnect Control Plane name : $TMP_KONNECT_CONTROL_PLANE_NAME_CLEAN"
 
                     // Use the Konnect Control Plane Name to search for the ID using the Konnect Control Plane API
-                    TMP_KONNECT_CONTROL_PLANE_ID = sh (script: 'curl --url "${KONNECT_ADDRESS}/v2/control-planes?filter%5Bname%5D=${KONNECT_CONTROL_PLANE_NAME_ENCODED}" --header "accept: */*" --header "Authorization: Bearer ${KONNECT_TOKEN}" | jq -r \'.data[0].id\'', returnStdout: true).trim()
+                    TMP_KONNECT_CONTROL_PLANE_ID = sh (script: 'curl --url "${KONNECT_ADDRESS}/v2/control-planes?filter%5Bname%5D=${KONNECT_CONTROL_PLANE_NAME_CLEAN}" --header "accept: */*" --header "Authorization: Bearer ${KONNECT_TOKEN}" | jq -r \'.data[0].id\'', returnStdout: true).trim()
                     env.KONNECT_CONTROL_PLANE_ID = TMP_KONNECT_CONTROL_PLANE_ID
                     echo "Konnect Control Plane ID: $TMP_KONNECT_CONTROL_PLANE_ID"
 
@@ -114,17 +122,17 @@ pipeline {
                     TMP_API_PRODUCT_VERSION_RAW = sh (script: 'yq .info.version ./api/spec.yaml -r', returnStdout: true).trim()
                     echo "API Product Version ID Raw: $TMP_API_PRODUCT_VERSION_RAW"
 
-                    TMP_API_PRODUCT_VERSION = sh (script: "echo $TMP_API_PRODUCT_VERSION_RAW-$KONNECT_CONTROL_PLANE_NAME_ENCODED", returnStdout: true).trim()
+                    TMP_API_PRODUCT_VERSION = sh (script: "echo $TMP_API_PRODUCT_VERSION_RAW-$KONNECT_CONTROL_PLANE_NAME_CLEAN", returnStdout: true).trim()
                     env.API_PRODUCT_VERSION = TMP_API_PRODUCT_VERSION
                     echo "API Product Version ID: $TMP_API_PRODUCT_VERSION"
 
                     // xxx
-                    TMP_DECK_GATEWAY_SERVICE_NAME = sh (script: "echo $TMP_API_PRODUCT_NAME_ENCODED-$TMP_API_PRODUCT_VERSION_RAW", returnStdout: true).trim()
+                    TMP_DECK_GATEWAY_SERVICE_NAME = sh (script: "echo $TMP_API_PRODUCT_NAME_CLEAN-$TMP_API_PRODUCT_VERSION_RAW", returnStdout: true).trim()
                     env.DECK_GATEWAY_SERVICE_NAME = TMP_DECK_GATEWAY_SERVICE_NAME
                     echo "Gateway Service Name: $TMP_DECK_GATEWAY_SERVICE_NAME"
 
                     // xxx
-                    TMP_GATEWAY_SERVICE_TAGS = sh (script: "echo $TMP_API_PRODUCT_VERSION-$API_PRODUCT_NAME_ENCODED", returnStdout: true).trim()
+                    TMP_GATEWAY_SERVICE_TAGS = sh (script: "echo $TMP_API_PRODUCT_VERSION-$API_PRODUCT_NAME_CLEAN", returnStdout: true).trim()
                     env.GATEWAY_SERVICE_TAGS = TMP_GATEWAY_SERVICE_TAGS
                     echo "Gateway Service Tags: $TMP_GATEWAY_SERVICE_TAGS"
                     }
@@ -221,6 +229,7 @@ pipeline {
         stage('Check if API Product Exists') {
             steps {
                 script {
+
                     // Checks if an API Product Version already exists so that we don't create a duplicate each time this is run
                     TMP_API_PRODUCT_ID = sh(script: '''
                         curl --url "${KONNECT_ADDRESS}/v2/api-products?filter%5Bname%5D=${API_PRODUCT_NAME_ENCODED}" \
@@ -438,5 +447,5 @@ pipeline {
             archiveArtifacts artifacts: './kong-backup.yaml', fingerprint: true
             deleteDir() /* clean up our workspace */
         }
-    }
+        }
 }
