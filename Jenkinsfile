@@ -15,7 +15,7 @@ pipeline {
     agent any
 
     environment {
-        KONNECT_TOKEN       = credentials('konnect-token')
+        KONNECT_TOKEN = credentials('konnect-token')
     }
 
     parameters {
@@ -38,9 +38,10 @@ pipeline {
         choice(name: 'API_PRODUCT_VERSION_STATUS', choices: [ "published", "deprecated", "unpublished" ], description: 'xxx')
 
         string(name: 'GATEWAY_SERVICE_ID', defaultValue: '')
-        string(name: 'GATEWAY_SERVICE_NAME', defaultValue: '')
         string(name: 'GATEWAY_SERVICE_TAGS', defaultValue: '', description: 'xxx')
         string(name: 'GATEWAY_URL', defaultValue: 'http://localhost:8000')
+
+        string(name: 'DECK_GATEWAY_SERVICE_NAME', defaultValue: '')
     }
 
     stages {
@@ -85,7 +86,7 @@ pipeline {
                     echo "API Product Name Encoded: $API_PRODUCT_NAME_ENCODED"
 
                     // The API Product Name might include spaces that we are changing to dashes.
-                    TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED = sh (script: "echo ${KONNECT_CONTROL_PLANE} | sed 's/ /-/g'", returnStdout: true).trim()
+                    TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED = sh (script: "echo ${KONNECT_CONTROL_PLANE_NAME} | sed 's/ /-/g'", returnStdout: true).trim()
                     env.KONNECT_CONTROL_PLANE_NAME_ENCODED = TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED
                     echo "Konnect Control Plane Name Encoded: $TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED"
 
@@ -108,9 +109,9 @@ pipeline {
                     echo "API Product Version ID: $TMP_API_PRODUCT_VERSION"
 
                     // xxx
-                    TMP_GATEWAY_SERVICE_NAME = sh (script: "echo $TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED-$TMP_API_PRODUCT_VERSION_RAW", returnStdout: true).trim()
-                    env.GATEWAY_SERVICE_NAME = TMP_GATEWAY_SERVICE_NAME
-                    echo "Gateway Service Name: $TMP_GATEWAY_SERVICE_NAME"
+                    TMP_DECK_GATEWAY_SERVICE_NAME = sh (script: "echo $TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED-$TMP_API_PRODUCT_VERSION_RAW", returnStdout: true).trim()
+                    env.DECK_GATEWAY_SERVICE_NAME = TMP_DECK_GATEWAY_SERVICE_NAME
+                    echo "Gateway Service Name: $TMP_DECK_GATEWAY_SERVICE_NAME"
 
                     // xxx
                     TMP_GATEWAY_SERVICE_TAGS = sh (script: "echo $TMP_API_PRODUCT_VERSION-$API_PRODUCT_NAME_ENCODED", returnStdout: true).trim()
@@ -149,7 +150,7 @@ pipeline {
                 sh 'deck file merge ./kong-generated.yaml ./api/plugins/* -o kong.yaml'
 
                 // Update Service Name with Version
-                sh "yq --in-place '.services[0].name = \"$GATEWAY_SERVICE_NAME\"' ./kong.yaml -y"
+                sh "yq --in-place '.services[0].name = \"$DECK_GATEWAY_SERVICE_NAME\"' ./kong.yaml -y"
 
                 // Validate Kong declarative configuration
                 sh '''

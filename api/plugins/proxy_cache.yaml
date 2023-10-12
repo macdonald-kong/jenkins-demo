@@ -1,6 +1,6 @@
 plugins:
 - name: proxy-cache
-  service: ${{ env "GATEWAY_SERVICE_NAME" }}
+  service: ${{ env "DECK_GATEWAY_SERVICE_NAME" }}
   config:
     response_code:
     - 200
