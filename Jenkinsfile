@@ -79,12 +79,12 @@ pipeline {
                     echo "API Product Name: $TMP_API_PRODUCT_NAME"
 
                     // The Konnect Control Plane Name might include characters that need to be URL encoded.
-                    TMP_API_PRODUCT_NAME_ENCODED = sh (script: 'echo ${TMP_API_PRODUCT_NAME} | sed \'s/ /%20/g\'', returnStdout: true).trim()
+                    TMP_API_PRODUCT_NAME_ENCODED = sh (script: "echo ${TMP_API_PRODUCT_NAME} | sed 's/ /%20/g'", returnStdout: true).trim()
                     env.API_PRODUCT_NAME_ENCODED = TMP_API_PRODUCT_NAME_ENCODED
                     echo "API Product Name Encoded: $API_PRODUCT_NAME_ENCODED"
 
                     // The API Product Name might include characters that need to be URL encoded.
-                    TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED = sh (script: 'echo ${KONNECT_CONTROL_PLANE} | sed \'s/ /%20/g\'', returnStdout: true).trim()
+                    TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED = sh (script: "echo ${KONNECT_CONTROL_PLANE} | sed 's/ /%20/g'", returnStdout: true).trim()
                     env.KONNECT_CONTROL_PLANE_NAME_ENCODED = TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED
                     echo "Konnect Control Plane Name Encoded: $TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED"
 
@@ -100,12 +100,14 @@ pipeline {
 
                     // The API Product Version name will not be unique if just based on what we extract from the OAS - we need to add the Control Plane Name to this
                     TMP_API_PRODUCT_VERSION_RAW = sh (script: 'yq .info.version ./api/oas/spec.yml -r', returnStdout: true).trim()
-                    TMP_API_PRODUCT_VERSION = sh (script: 'echo ${TMP_API_PRODUCT_VERSION_RAW}-${KONNECT_CONTROL_PLANE_NAME_ENCODED}', returnStdout: true).trim()
+                    echo "API Product Version ID Raw: $TMP_API_PRODUCT_VERSION_RAW"
+
+                    TMP_API_PRODUCT_VERSION = sh (script: "echo $TMP_API_PRODUCT_VERSION_RAW-$KONNECT_CONTROL_PLANE_NAME_ENCODED", returnStdout: true).trim()
                     env.API_PRODUCT_VERSION = TMP_API_PRODUCT_VERSION
                     echo "API Product Version ID: $TMP_API_PRODUCT_VERSION"
 
                     // xxx
-                    TMP_GATEWAY_SERVICE_TAGS = sh (script: ' echo ${TMP_API_PRODUCT_VERSION_RAW}-${KONNECT_CONTROL_PLANE_NAME_ENCODED}-${KONNECT_CONTROL_PLANE_NAME_ENCODED}', returnStdout: true).trim()
+                    TMP_GATEWAY_SERVICE_TAGS = sh (script: "echo $TMP_API_PRODUCT_VERSION-$API_PRODUCT_NAME_ENCODED", returnStdout: true).trim()
                     env.GATEWAY_SERVICE_TAGS = TMP_GATEWAY_SERVICE_TAGS
                     echo "Gateway Service Tags: $TMP_GATEWAY_SERVICE_TAGS"
                     }
