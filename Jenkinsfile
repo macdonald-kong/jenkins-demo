@@ -105,7 +105,7 @@ pipeline {
                     echo "API Product Version ID: $TMP_API_PRODUCT_VERSION"
 
                     // xxx
-                    TMP_GATEWAY_SERVICE_TAGS = sh (script: 'yecho ${TMP_API_PRODUCT_VERSION_RAW}-${KONNECT_CONTROL_PLANE_NAME_ENCODED}-${KONNECT_CONTROL_PLANE_NAME_ENCODED}', returnStdout: true).trim()
+                    TMP_GATEWAY_SERVICE_TAGS = sh (script: ' echo ${TMP_API_PRODUCT_VERSION_RAW}-${KONNECT_CONTROL_PLANE_NAME_ENCODED}-${KONNECT_CONTROL_PLANE_NAME_ENCODED}', returnStdout: true).trim()
                     env.GATEWAY_SERVICE_TAGS = TMP_GATEWAY_SERVICE_TAGS
                     echo "Gateway Service Tags: $TMP_GATEWAY_SERVICE_TAGS"
                     }
