@@ -71,11 +71,18 @@ pipeline {
             }
         }
 
+        stage('Export OAS from Insomnia Workspace') {
+            steps {
+                // Export OAS from Insomnia Workspace using export command and save into local file.
+                sh ''
+            }
+        }
+        
         stage('Set Variables') {
             steps {
                 script {
 
-                    // xxx
+                    // Extract the API Product name from the title of the OAS
                     TMP_API_PRODUCT_NAME = sh (script: 'yq .info.title ./api/oas/spec.yml -r', returnStdout: true).trim()
                     env.API_PRODUCT_NAME = TMP_API_PRODUCT_NAME
                     echo "API Product Name: $TMP_API_PRODUCT_NAME"
@@ -109,7 +116,7 @@ pipeline {
                     echo "API Product Version ID: $TMP_API_PRODUCT_VERSION"
 
                     // xxx
-                    TMP_DECK_GATEWAY_SERVICE_NAME = sh (script: "echo $TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED-$TMP_API_PRODUCT_VERSION_RAW", returnStdout: true).trim()
+                    TMP_DECK_GATEWAY_SERVICE_NAME = sh (script: "echo $TMP_API_PRODUCT_NAME_ENCODED-v$TMP_API_PRODUCT_VERSION_RAW", returnStdout: true).trim()
                     env.DECK_GATEWAY_SERVICE_NAME = TMP_DECK_GATEWAY_SERVICE_NAME
                     echo "Gateway Service Name: $TMP_DECK_GATEWAY_SERVICE_NAME"
 
@@ -118,13 +125,6 @@ pipeline {
                     env.GATEWAY_SERVICE_TAGS = TMP_GATEWAY_SERVICE_TAGS
                     echo "Gateway Service Tags: $TMP_GATEWAY_SERVICE_TAGS"
                     }
-            }
-        }
-
-        stage('Export OAS from Insomnia Workspace') {
-            steps {
-                // Export OAS from Insomnia Workspace using export command and save into local file.
-                sh ''
             }
         }
 
@@ -192,7 +192,7 @@ pipeline {
                         --state kong.yaml \
                         --konnect-addr ${KONNECT_ADDRESS} \
                         --konnect-token ${KONNECT_TOKEN} \
-                        --konnect-control-plane-name ${KONNECT_CONTROL_PLANE} \
+                        --konnect-control-plane-name ${KONNECT_CONTROL_PLANE_NAME} \
                         --select-tag ${GATEWAY_SERVICE_TAGS}
                  '''
             }

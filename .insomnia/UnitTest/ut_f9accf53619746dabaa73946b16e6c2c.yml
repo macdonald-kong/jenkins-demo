@@ -1,0 +1,10 @@
+_id: ut_f9accf53619746dabaa73946b16e6c2c
+type: UnitTest
+parentId: uts_0fc6521dd571499daf1e3da027c9570f
+modified: 1687379180296
+created: 1687379164244
+requestId: req_f05f71b17973496d8f39089ad8be10b1
+name: Get Employee by ID (1234) - Returns 200
+code: |-
+  const response1 = await insomnia.send();
+  expect(response1.status).to.equal(200);
