@@ -1,6 +1,6 @@
 plugins:
 - name: proxy-cache
-  service: employees-directory
+  service: ${{ env "GATEWAY_SERVICE_NAME" }}
   config:
     response_code:
     - 200

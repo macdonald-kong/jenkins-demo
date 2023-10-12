@@ -16,13 +16,12 @@ pipeline {
 
     environment {
         KONNECT_TOKEN       = credentials('konnect-token')
-        KONG_GATEWAY_URL    = credentials('gateway-url')
     }
 
     parameters {
         string(name: 'KONNECT_ADDRESS', defaultValue: 'https://eu.api.konghq.com', description: 'xxx')
 
-        string(name: 'KONNECT_CONTROL_PLANE', defaultValue: 'hr-dev', description: 'xxx')
+        string(name: 'KONNECT_CONTROL_PLANE_NAME', defaultValue: 'hr-dev', description: 'xxx')
         string(name: 'KONNECT_CONTROL_PLANE_ID', defaultValue: '')
         string(name: 'KONNECT_CONTROL_PLANE_NAME_ENCODED', defaultValue: '')
 
@@ -39,7 +38,9 @@ pipeline {
         choice(name: 'API_PRODUCT_VERSION_STATUS', choices: [ "published", "deprecated", "unpublished" ], description: 'xxx')
 
         string(name: 'GATEWAY_SERVICE_ID', defaultValue: '')
+        string(name: 'GATEWAY_SERVICE_NAME', defaultValue: '')
         string(name: 'GATEWAY_SERVICE_TAGS', defaultValue: '', description: 'xxx')
+        string(name: 'GATEWAY_URL', defaultValue: 'http://localhost:8000')
     }
 
     stages {
@@ -47,16 +48,16 @@ pipeline {
         stage('Check Prerequisites') {
             steps {
 
-                // Check that jq has been installed
+                // Check that jq has been installed and print version
                 sh 'jq -V'
 
-                // Check that yq has been installed
+                // Check that yq has been installed and print version
                 sh 'yq --version'
 
-                // Check that deck has been installed
+                // Check that deck has been installed and print version
                 sh 'deck version'
 
-                // Check Inso CLI is installed
+                // Check Inso CLI is installed and print version
                 sh ' inso -v'
 
                 // Ping Kong Konnect to check connectivity
@@ -64,7 +65,7 @@ pipeline {
                     deck ping \
                         --konnect-addr ${KONNECT_ADDRESS} \
                         --konnect-token ${KONNECT_TOKEN} \
-                        --konnect-control-plane-name ${KONNECT_CONTROL_PLANE}
+                        --konnect-control-plane-name ${KONNECT_CONTROL_PLANE_NAME}
                 '''
             }
         }
@@ -107,10 +108,22 @@ pipeline {
                     echo "API Product Version ID: $TMP_API_PRODUCT_VERSION"
 
                     // xxx
+                    TMP_GATEWAY_SERVICE_NAME = sh (script: "echo $TMP_KONNECT_CONTROL_PLANE_NAME_ENCODED-$TMP_API_PRODUCT_VERSION_RAW", returnStdout: true).trim()
+                    env.GATEWAY_SERVICE_NAME = TMP_GATEWAY_SERVICE_NAME
+                    echo "Gateway Service Name: $TMP_GATEWAY_SERVICE_NAME"
+
+                    // xxx
                     TMP_GATEWAY_SERVICE_TAGS = sh (script: "echo $TMP_API_PRODUCT_VERSION-$API_PRODUCT_NAME_ENCODED", returnStdout: true).trim()
                     env.GATEWAY_SERVICE_TAGS = TMP_GATEWAY_SERVICE_TAGS
                     echo "Gateway Service Tags: $TMP_GATEWAY_SERVICE_TAGS"
                     }
+            }
+        }
+
+        stage('Export OAS from Insomnia Workspace') {
+            steps {
+                // Export OAS from Insomnia Workspace using export command and save into local file.
+                sh ''
             }
         }
 
@@ -135,6 +148,9 @@ pipeline {
                 // Merge Kong Configuration with Plugins
                 sh 'deck file merge ./kong-generated.yaml ./api/plugins/* -o kong.yaml'
 
+                // Update Service Name with Version
+                sh "yq --in-place '.services[0].name = \"$GATEWAY_SERVICE_NAME\"' ./kong.yaml -y"
+
                 // Validate Kong declarative configuration
                 sh '''
                     deck validate \
@@ -147,7 +163,7 @@ pipeline {
                         --state kong.yaml \
                         --konnect-addr ${KONNECT_ADDRESS} \
                         --konnect-token ${KONNECT_TOKEN} \
-                        --konnect-control-plane-name ${KONNECT_CONTROL_PLANE} \
+                        --konnect-control-plane-name ${KONNECT_CONTROL_PLANE_NAME} \
                         --select-tag ${GATEWAY_SERVICE_TAGS}
                  '''
             }
@@ -160,7 +176,7 @@ pipeline {
                     deck dump \
                         --konnect-addr ${KONNECT_ADDRESS} \
                         --konnect-token ${KONNECT_TOKEN} \
-                        --konnect-control-plane-name ${KONNECT_CONTROL_PLANE} \
+                        --konnect-control-plane-name ${KONNECT_CONTROL_PLANE_NAME} \
                         --output-file kong-backup.yaml \
                         --yes
                  '''

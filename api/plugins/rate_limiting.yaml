@@ -1,6 +1,6 @@
 plugins:
 - name: rate-limiting
-  service: employees-directory
+  service: ${{ env "GATEWAY_SERVICE_NAME" }}
   config:
     minute: 120
     policy: local
