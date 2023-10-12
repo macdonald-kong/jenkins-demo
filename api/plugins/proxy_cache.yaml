@@ -1,6 +1,6 @@
 plugins:
 - name: proxy-cache
-  service: Employees-Directory
+  service: employees-directory
   config:
     response_code:
     - 200
