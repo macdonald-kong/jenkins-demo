@@ -75,13 +75,12 @@ pipeline {
             steps {
                 // Export OAS from Insomnia Workspace using export command and save into local file.
                 sh '''
-                INSO_SPEC_FILE=$(echo -n ./.insomnia/Workspace/*)
-                INSO_SPEC_NAME=$(yq .name $INSO_SPEC_FILE)
-                inso export spec $INSO_SPEC_NAME > ./api/spec.yaml
+                    INSO_SPEC_FILE=$(echo -n ./.insomnia/Workspace/*)
+                    INSO_SPEC_NAME=$(yq .name $INSO_SPEC_FILE -r)
+                    inso export spec $INSO_SPEC_NAME > ./api/spec.yaml
                 '''
-            } 
+            }
         }
-
         stage('Set Variables') {
             steps {
                 script {
@@ -120,7 +119,7 @@ pipeline {
                     echo "API Product Version ID: $TMP_API_PRODUCT_VERSION"
 
                     // xxx
-                    TMP_DECK_GATEWAY_SERVICE_NAME = sh (script: "echo $TMP_API_PRODUCT_NAME_ENCODED-v$TMP_API_PRODUCT_VERSION_RAW", returnStdout: true).trim()
+                    TMP_DECK_GATEWAY_SERVICE_NAME = sh (script: "echo $TMP_API_PRODUCT_NAME_ENCODED-$TMP_API_PRODUCT_VERSION_RAW", returnStdout: true).trim()
                     env.DECK_GATEWAY_SERVICE_NAME = TMP_DECK_GATEWAY_SERVICE_NAME
                     echo "Gateway Service Name: $TMP_DECK_GATEWAY_SERVICE_NAME"
 
@@ -385,6 +384,10 @@ pipeline {
 
         stage('Upload OAS to API Product Version') {
             steps {
+
+                // Update the specification with the correct Kong Gateway URL location instead of pointing to the backend service.
+                sh "yq -i '.servers[0].url = $KONG_GATEWAY_URL' ./api/spec.yaml"
+
                 // Add the OAS to the JSON Payload required by the Konnect Product API Version API and output as a file
                 sh '''
                     base64 -w 0 ./api/spec.yaml > oas-encoded.yaml
