@@ -412,7 +412,7 @@ pipeline {
                 sh '''
                     INSO_SPEC_FILE=$(echo -n ./.insomnia/Workspace/*)
                     INSO_SPEC_NAME=$(yq .name $INSO_SPEC_FILE -r)
-                    inso run test $INSO_SPEC_NAME
+                    inso run test $INSO_SPEC_NAME --bail --keepFile
                 '''
             }
         }
@@ -430,6 +430,12 @@ pipeline {
                     --data '{"portal_ids":["'"$KONNECT_PORTAL"'"]}'
                 fi
                 '''
+            }
+        }
+        post {
+            always {
+                archiveArtifacts artifacts: './kong-backup.yaml', fingerprint: true
+                deleteDir() /* clean up our workspace */
             }
         }
     }
