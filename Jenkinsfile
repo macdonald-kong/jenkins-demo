@@ -428,25 +428,29 @@ pipeline {
         }
 
         stage('Deploy to Developer Portal') {
+            when {
+                expression { env.API_PRODUCT_PUBLISH == true }
+            }
             steps {
                 // Publish API Product to the Developer Portal by updating the portal ID field
                 sh '''
-                if [[ "${API_PRODUCT_PUBLISH}" == true ]]; then
                     curl --request PATCH \
                     --url "${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}" \
                     --header "Authorization: Bearer ${KONNECT_TOKEN}" \
                     --header 'Content-Type: application/json' \
                     --header 'accept: application/json' \
                     --data '{"portal_ids":["'"$KONNECT_PORTAL"'"]}'
-                fi
                 '''
             }
         }
     }
+    
     post {
         always {
+            // Archive our latest Kong declarative configuration
+            archiveArtifacts artifacts: 'kong.yaml', fingerprint: true
             // Archive our backup artifact
-            archiveArtifacts artifacts: './kong-backup.yaml', fingerprint: true
+            archiveArtifacts artifacts: 'kong-backup.yaml', fingerprint: true
             // Clean up the workspace
             deleteDir()
         }
