@@ -41,7 +41,7 @@ pipeline {
 
         string(name: 'GATEWAY_SERVICE_ID', defaultValue: '')
         string(name: 'GATEWAY_SERVICE_TAGS', defaultValue: '', description: 'xxx')
-        string(name: 'GATEWAY_URL', defaultValue: 'http://kong-gateway:8000')
+        string(name: 'GATEWAY_URL', defaultValue: 'http://kdp-kong-proxy.hr-dev.svc.cluster.local:8000')
 
         string(name: 'DECK_GATEWAY_SERVICE_NAME', defaultValue: '')
     }
@@ -444,8 +444,10 @@ pipeline {
     }
     post {
         always {
+            // Archive our backup artifact
             archiveArtifacts artifacts: './kong-backup.yaml', fingerprint: true
-            deleteDir() /* clean up our workspace */
+            // Clean up the workspace
+            deleteDir()
         }
     }
 }
