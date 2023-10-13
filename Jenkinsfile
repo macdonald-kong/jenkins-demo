@@ -342,19 +342,13 @@ pipeline {
                 // Delete the current Product API Version OAS so that we can upload the new one with any updates
                 // This is very inneficient - will improve later
                 sh '''
-                    OAS_JSON=$(curl --url ${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}/product-versions/${API_PRODUCT_VERSION_ID}/specifications \
+                    # Fetch OAS JSON from Kong Konnect API
+                    OAS_ID=$(curl --url "${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}/product-versions/${API_PRODUCT_VERSION_ID}/specifications" \
                         --header "Authorization: Bearer ${KONNECT_TOKEN}" \
-                        --header "Content-Type: application/json")
+                        --header "Content-Type: application/json" | jq -r '.data[].id')
 
-                    echo "Currently available oas: $OAS_JSON"
-
-                    # Extract oas IDs and send DELETE requests
-                    ids=$(echo $OAS_JSON | jq -r '.data[].id')
-
-                    for id in $ids; do
-                        curl -X DELETE --url $KONNECT_ADDRESS/v2/api-products/$API_PRODUCT_ID/product-versions/${API_PRODUCT_VERSION_ID}/specifications/$id \
-                            --header "Authorization: Bearer ${KONNECT_TOKEN}" 
-                    done
+                    curl -X DELETE --url "${KONNECT_ADDRESS}/v2/api-products/${API_PRODUCT_ID}/product-versions/${API_PRODUCT_VERSION_ID}/specifications/${OAS_ID}" \
+                        --header "Authorization: Bearer ${KONNECT_TOKEN}"
                 '''
                 }
             }
@@ -429,7 +423,7 @@ pipeline {
 
         stage('Deploy to Developer Portal') {
             when {
-                expression { env.API_PRODUCT_PUBLISH == true }
+                expression { env.API_PRODUCT_PUBLISH.toBoolean() == true }
             }
             steps {
                 // Publish API Product to the Developer Portal by updating the portal ID field
@@ -452,7 +446,7 @@ pipeline {
             // Archive our backup artifact
             archiveArtifacts artifacts: 'kong-backup.yaml', fingerprint: true
             // Clean up the workspace
-            deleteDir()
+            // deleteDir()
         }
     }
 }
