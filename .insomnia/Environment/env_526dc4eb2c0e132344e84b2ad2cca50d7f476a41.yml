@@ -5,7 +5,7 @@ modified: 1691442631952
 created: 1687378772238
 name: Base Environment
 data:
-  base_url: http://kong-gateway:8000
+  base_url: http://kdp-kong-proxy.hr-dev.svc.cluster.local:8000
   employeeId: "9"
   newEmployeeId: "1234"
 dataPropertyOrder:

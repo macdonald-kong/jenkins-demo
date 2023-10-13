@@ -400,7 +400,8 @@ pipeline {
                 // Add the OAS to the JSON Payload required by the Konnect Product API Version API and output as a file
                 sh '''
                     base64 -w 0 ./api/spec.yaml > oas-encoded.yaml
-                    jq --null-input --arg content "$(<oas-encoded.yaml)" '{"name": "oas.yaml", "content": $content}' > product_version_spec.json
+                    jq --null-input --arg content "$(cat oas-encoded.yaml)" '{"name": "oas.yaml", "content": $content}' > product_version_spec.json
+
                 '''
 
                 // Upload the prepared OAS JSON Payload to the API Product Version
