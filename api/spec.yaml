@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
-  title: HttpbinAPI
-  description: Demo OpenAPI Specification
+  title: sno-113-HttpbinAPI
+  description: SNO-113 Demo OpenAPI Specification for CICD
   version: '1.0'
   contact:
     email: david.macdonald@konhq.com
