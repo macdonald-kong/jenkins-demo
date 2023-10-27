@@ -3,7 +3,7 @@ type: Workspace
 parentId: null
 modified: 1687378772132
 created: 1687378772132
-name: employees-directory-simple.git
+name: httpbin.git
 description: Insomnia Workspace for
   git+https://github.com/macdonald-kong/employees-directory-simple.git}
 scope: design
