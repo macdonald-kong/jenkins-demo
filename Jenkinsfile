@@ -72,16 +72,6 @@ pipeline {
             }
         }
 
-        stage('Export OAS from Insomnia Workspace') {
-            steps {
-                // Export OAS from Insomnia Workspace using export command and save into local file.
-                sh '''
-                    INSO_SPEC_FILE=$(echo -n ./.insomnia/Workspace/*)
-                    INSO_SPEC_NAME=$(yq .name $INSO_SPEC_FILE -r)
-                    inso export spec $INSO_SPEC_NAME > ./api/spec.yaml
-                '''
-            }
-        }
         stage('Set Variables') {
             steps {
                 script {
