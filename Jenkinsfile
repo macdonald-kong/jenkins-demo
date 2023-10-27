@@ -1,4 +1,3 @@
-
 /**
 *
 * Basic Jenkinsfile for Kong Konnect Demonstrations
