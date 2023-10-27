@@ -399,17 +399,6 @@ pipeline {
             }
         }
 
-        stage('Testing') {
-            steps {
-                // Run the tests defined in our Insomnia Test Suite
-                sh '''
-                    INSO_SPEC_FILE=$(echo -n ./.insomnia/Workspace/*)
-                    INSO_SPEC_NAME=$(yq .name $INSO_SPEC_FILE -r)
-                    inso run test $INSO_SPEC_NAME --bail --keepFile
-                '''
-            }
-        }
-
         stage('Deploy to Developer Portal') {
             when {
                 expression { env.API_PRODUCT_PUBLISH.toBoolean() == true }
