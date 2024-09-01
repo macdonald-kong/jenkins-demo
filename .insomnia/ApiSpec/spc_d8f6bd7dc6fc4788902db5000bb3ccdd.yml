@@ -1,0 +1,46 @@
+_id: spc_d8f6bd7dc6fc4788902db5000bb3ccdd
+type: ApiSpec
+parentId: wrk_d2c45567cdb04ea789e458e0f20ece0e
+modified: 1725226249204
+created: 1725226237399
+fileName: New Document
+contents: |-
+  openapi: 3.0.1
+  info:
+    title: 008-httpbin-headers-jenkins
+    description: 008 Demo OpenAPI Specification for CICD
+    version: '1.0'
+    contact:
+      email: david.macdonald@konhq.com
+
+  servers:
+    - url: https://httpbin.org
+
+  tags:
+    - name: TagB
+      description: Operations for testing headers
+
+  paths:
+
+    /headers:
+      get:
+        summary: Returns the request headers.
+        description: Header service
+        operationId: getHeaders
+        tags:
+        - TagB
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    headers:
+                      type: object
+                      additionalProperties:
+                        type: string
+                  required:
+                    - headers
+contentType: yaml

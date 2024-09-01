@@ -1,0 +1,14 @@
+_id: env_aee307a4278e2b4042d7616fe4b1768eb475f35d
+type: Environment
+parentId: wrk_d2c45567cdb04ea789e458e0f20ece0e
+modified: 1725226300734
+created: 1725226237431
+name: Base Environment
+data:
+  base_url: https://a7a34e584919344cd8e84746d9531009-200741905.eu-west-2.elb.amazonaws.com:8443
+dataPropertyOrder:
+  "&":
+    - base_url
+color: null
+isPrivate: false
+metaSortKey: 1725226237431

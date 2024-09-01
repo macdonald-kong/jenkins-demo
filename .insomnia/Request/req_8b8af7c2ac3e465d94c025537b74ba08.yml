@@ -1,0 +1,24 @@
+_id: req_8b8af7c2ac3e465d94c025537b74ba08
+type: Request
+parentId: fld_7c117fbc04ac43248d5b917e5b678e35
+modified: 1725226267019
+created: 1725226259473
+url: "{{ _.base_url }}/headers"
+name: Returns the request headers.
+description: Header service
+method: GET
+body: {}
+parameters: []
+headers: []
+authentication: {}
+preRequestScript: null
+metaSortKey: -1725226259473
+isPrivate: false
+pathParameters: null
+afterResponseScript: null
+settingStoreCookies: true
+settingSendCookies: true
+settingDisableRenderRequestBody: false
+settingEncodeUrl: true
+settingRebuildPath: true
+settingFollowRedirects: global
