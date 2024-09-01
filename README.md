@@ -2,7 +2,7 @@
 
 ## Overview
 
-This demonstration repository will use Jenkins to execute the following steps to deploy the Employees Directory API to Kong Konnect:
+This demonstration repository will use Jenkins to execute the following steps to deploy the HTTPBin Headers API to Kong Konnect:
   
 - Lints the OpenAPI Spec (OAS) using Inso CLI
 - Generate Kong declarative configuration from OAS using Inso CLI
@@ -19,9 +19,5 @@ This demonstration repository will use Jenkins to execute the following steps to
 - Uploads OAS to Product Version using Konnect Admin API
 - Runs Unit Tests using Inso CLI
 - Publishes Product Version to Developer Portal using Konnect Admin API
-
-# Deploy Jenkins
-
-# Deploy Kong Gateway
 
 
