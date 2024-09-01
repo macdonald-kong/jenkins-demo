@@ -18,13 +18,13 @@ pipeline {
     }
 
     parameters {
-        string(name: 'KONNECT_ADDRESS', defaultValue: 'https://eu.api.konghq.com', description: 'xxx')
+        string(name: 'KONNECT_ADDRESS', defaultValue: 'https://us.api.konghq.com', description: 'xxx')
 
-        string(name: 'KONNECT_CONTROL_PLANE_NAME', defaultValue: 'hr-dev', description: 'xxx')
+        string(name: 'KONNECT_CONTROL_PLANE_NAME', defaultValue: 'development', description: 'xxx')
         string(name: 'KONNECT_CONTROL_PLANE_ID', defaultValue: '')
         string(name: 'KONNECT_CONTROL_PLANE_NAME_CLEAN', defaultValue: '')
 
-        string(name: 'KONNECT_PORTAL', defaultValue: '4abacaf1-47dc-4c07-83ff-a8801782277e', description: 'xxx')
+        string(name: 'KONNECT_PORTAL', defaultValue: '19276d90-1a79-4001-ae7d-e4a5bf05fe76', description: 'xxx')
 
         string(name: 'API_PRODUCT_ID', defaultValue: '')
         string(name: 'API_PRODUCT_NAME', defaultValue: '', description: 'xxx')
@@ -40,7 +40,7 @@ pipeline {
 
         string(name: 'GATEWAY_SERVICE_ID', defaultValue: '')
         string(name: 'GATEWAY_SERVICE_TAGS', defaultValue: '', description: 'xxx')
-        string(name: 'GATEWAY_URL', defaultValue: 'http://kdp-kong-proxy.hr-dev.svc.cluster.local:8000')
+        string(name: 'GATEWAY_URL', defaultValue: 'https://a7a34e584919344cd8e84746d9531009-200741905.eu-west-2.elb.amazonaws.com:8443')
 
         string(name: 'DECK_GATEWAY_SERVICE_NAME', defaultValue: '')
     }
