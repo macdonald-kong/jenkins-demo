@@ -402,7 +402,7 @@ pipeline {
         stage('Run Tests') {
             steps {
                 // Test Deployed Service with Inso CLI
-                sh 'inso run test uts_7e3ccb -e env_85c4a08968'
+                sh 'inso run test uts_7e3ccb -e env_85c4a08968 --ci -w .'
             }
         }
         
