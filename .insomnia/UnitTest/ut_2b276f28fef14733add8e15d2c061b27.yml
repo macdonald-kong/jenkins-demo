@@ -1,11 +1,23 @@
 _id: ut_2b276f28fef14733add8e15d2c061b27
 type: UnitTest
 parentId: uts_7e3ccb287e8f42c88c649701db6b1605
-modified: 1725226317042
+modified: 1725228613000
 created: 1725226315580
 requestId: req_8b8af7c2ac3e465d94c025537b74ba08
-name: Returns 200
-code: |-
-  const response1 = await insomnia.send();
-  expect(response1.status).to.equal(200);
+name: Validate Response
+code: |
+  const response = await insomnia.send();
+
+  console.log(response.data);
+
+  expect(response.data).to.be.a('string');
+
+  const body = JSON.parse(response.data);
+
+  expect(body).to.be.an('object');
+
+  expect(body.headers).to.be.an('object');
+
+  expect(body.headers).to.have.property('Accept');
+  expect(body.headers).to.have.property('Host');
 metaSortKey: -1725226315580
